@@ -1,0 +1,8 @@
+models/**/*.onnx
+models/**/*.onnx.data
+models/qwen-ctc-r2/
+logs/
+__pycache__/
+*.pyc
+.venv/
+issue_glm_ctc_draft.md

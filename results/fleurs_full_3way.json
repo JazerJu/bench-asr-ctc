@@ -1,0 +1,246 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "full",
+    "engines": {
+      "glm": {
+        "ctc": "GLM-ASR-CTC-Final134k",
+        "quantized": true
+      },
+      "fun": "fun-asr-nano-int4",
+      "qwen": {
+        "ctc": "Qwen3-ASR-CTC-56916",
+        "quantized": true
+      }
+    },
+    "onnxruntime": "1.27.0",
+    "providers": {
+      "glm": "CUDAExecutionProvider",
+      "fun": "CUDAExecutionProvider",
+      "qwen": "CUDAExecutionProvider"
+    },
+    "timestamp": "2026-08-28 16:44:41"
+  },
+  "results": {
+    "en_us": {
+      "metric": "WER",
+      "train_src": "librispeech+gigaspeech",
+      "n": 647,
+      "glm_er": 18.3,
+      "glm_err/total": [
+        2604,
+        14202
+      ],
+      "fun_er": 18.1,
+      "fun_err/total": [
+        2569,
+        14202
+      ],
+      "qwen_er": 18.3,
+      "qwen_err/total": [
+        2596,
+        14202
+      ]
+    },
+    "cmn_hans_cn": {
+      "metric": "CER",
+      "train_src": "aishell1+wenetspeech+magicdata",
+      "n": 945,
+      "glm_er": 10.7,
+      "glm_err/total": [
+        3548,
+        33059
+      ],
+      "fun_er": 9.3,
+      "fun_err/total": [
+        3069,
+        33059
+      ],
+      "qwen_er": 10.9,
+      "qwen_err/total": [
+        3597,
+        33059
+      ]
+    },
+    "ko_kr": {
+      "metric": "CER",
+      "train_src": "ksponspeech",
+      "n": 382,
+      "glm_er": 39.5,
+      "glm_err/total": [
+        6650,
+        16849
+      ],
+      "fun_er": 46.0,
+      "fun_err/total": [
+        7743,
+        16849
+      ],
+      "qwen_er": 20.3,
+      "qwen_err/total": [
+        3421,
+        16849
+      ]
+    },
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 650,
+      "glm_er": 31.0,
+      "glm_err/total": [
+        9786,
+        31584
+      ],
+      "fun_er": 17.0,
+      "fun_err/total": [
+        5362,
+        31584
+      ],
+      "qwen_er": 30.9,
+      "qwen_err/total": [
+        9746,
+        31584
+      ]
+    },
+    "yue_hant_hk": {
+      "metric": "CER",
+      "train_src": "cv_yue",
+      "n": 819,
+      "glm_er": 42.7,
+      "glm_err/total": [
+        11834,
+        27714
+      ],
+      "fun_er": 43.2,
+      "fun_err/total": [
+        11984,
+        27714
+      ],
+      "qwen_er": 30.1,
+      "qwen_err/total": [
+        8345,
+        27714
+      ]
+    },
+    "de_de": {
+      "metric": "WER",
+      "train_src": "mls_german",
+      "n": 862,
+      "glm_er": 35.7,
+      "glm_err/total": [
+        6540,
+        18303
+      ],
+      "fun_er": 75.5,
+      "fun_err/total": [
+        13814,
+        18303
+      ],
+      "qwen_er": 41.6,
+      "qwen_err/total": [
+        7616,
+        18303
+      ]
+    },
+    "fr_fr": {
+      "metric": "WER",
+      "train_src": "mls_french",
+      "n": 676,
+      "glm_er": 39.8,
+      "glm_err/total": [
+        6654,
+        16731
+      ],
+      "fun_er": 76.6,
+      "fun_err/total": [
+        12816,
+        16731
+      ],
+      "qwen_er": 46.6,
+      "qwen_err/total": [
+        7799,
+        16731
+      ]
+    },
+    "es_419": {
+      "metric": "WER",
+      "train_src": "mls_spanish",
+      "n": 908,
+      "glm_er": 29.7,
+      "glm_err/total": [
+        6833,
+        23045
+      ],
+      "fun_er": 63.0,
+      "fun_err/total": [
+        14529,
+        23045
+      ],
+      "qwen_er": 35.6,
+      "qwen_err/total": [
+        8193,
+        23045
+      ]
+    },
+    "it_it": {
+      "metric": "WER",
+      "train_src": "mls_italian",
+      "n": 865,
+      "glm_er": 40.8,
+      "glm_err/total": [
+        8313,
+        20390
+      ],
+      "fun_er": 86.2,
+      "fun_err/total": [
+        17581,
+        20390
+      ],
+      "qwen_er": 50.9,
+      "qwen_err/total": [
+        10378,
+        20390
+      ]
+    },
+    "nl_nl": {
+      "metric": "WER",
+      "train_src": "mls_dutch",
+      "n": 364,
+      "glm_er": 46.7,
+      "glm_err/total": [
+        3828,
+        8201
+      ],
+      "fun_er": 95.8,
+      "fun_err/total": [
+        7859,
+        8201
+      ],
+      "qwen_er": 50.1,
+      "qwen_err/total": [
+        4106,
+        8201
+      ]
+    },
+    "pl_pl": {
+      "metric": "WER",
+      "train_src": "mls_polish",
+      "n": 758,
+      "glm_er": 69.3,
+      "glm_err/total": [
+        9797,
+        14146
+      ],
+      "fun_er": 98.8,
+      "fun_err/total": [
+        13983,
+        14146
+      ],
+      "qwen_er": 77.1,
+      "qwen_err/total": [
+        10910,
+        14146
+      ]
+    }
+  }
+}

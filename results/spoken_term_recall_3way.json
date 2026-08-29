@@ -1,0 +1,8 @@
+{
+ "fq_spoken_term_recall": {
+  "glm": "10/37=27%",
+  "qwen": "12/37=32%",
+  "fun": "20/37=54%",
+  "note": "qwen hits bbr×2/gfw/cpu which glm misses; glm hits ssl×2 which qwen misses — complementary"
+ }
+}

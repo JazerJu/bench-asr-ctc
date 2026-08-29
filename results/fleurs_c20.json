@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "20",
+    "engines": {
+      "glm": {
+        "ctc": "GLM-ASR-CTC-Final134k",
+        "quantized": true
+      },
+      "fun": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.27.0",
+    "providers": {
+      "glm": "CUDAExecutionProvider",
+      "fun": "CPUExecutionProvider"
+    },
+    "timestamp": "2026-08-27 16:01:09"
+  },
+  "results": {
+    "en_us": {
+      "metric": "WER",
+      "train_src": "librispeech+gigaspeech",
+      "n": 20,
+      "glm_er": 16.0,
+      "glm_err/total": [
+        75,
+        468
+      ],
+      "fun_er": 21.6,
+      "fun_err/total": [
+        101,
+        468
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+ "video": "sglang-dsv4.mp4 前20min, 60窗×20s, CTC-only成对+人工仲裁+LLM交叉验证(115-140s)",
+ "fun_wins": {
+  "deepseek": "6/6 Fun命中(deepc克/deep克), GLM 0/6 (整词丢失或写成斯)",
+  "sglang": "2 Fun(sg浪团队/sg浪支持), GLM 0",
+  "hopper": "1 Fun(hoper系列), GLM 0",
+  "kv_cache命名": "key cash×2/red cash×2 Fun半命中, GLM丢名",
+  "ring_buffer": "ber Fun半命中, GLM 0",
+  "softmax/lightning_topk/prefill_decode/hack/comp": "Fun部分命中, GLM丢"
+ },
+ "glm_wins": {
+  "infra/attention": "t=180 两词全中, Fun丢",
+  "swa": "s w a attention GLM中, Fun(斯拉定位)丢",
+  "padding": "paidding GLM中, Fun丢",
+  "buffer": "3窗 GLM完整buffer, Fun(buff/崩)碎",
+  "engine/cp/pd": "GLM中, Fun丢"
+ },
+ "artifacts": {
+  "glm_filler_bug": "<fil 32次/20min: 说话人发'呓'填充音时GLM落到 '<'+fil token, Fun正确输出'呃'",
+  "fun_chinese_noise": "张亮/长量/捡索/深成/崩 等同音错, 拉丁伪影 fast ag/ready/mlml"
+ },
+ "llm_crosscheck_115_140s": "CTC丢DeepSeek和sglang, LLM decoder凭先验补回两者"
+}

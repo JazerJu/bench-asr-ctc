@@ -1,0 +1,27 @@
+{
+  "n_segments": 15,
+  "glm": {
+    "cer_han": 47.0,
+    "mixed_cer": 49.6,
+    "han_err/total": [
+      461,
+      981
+    ],
+    "mixed_err/total": [
+      506,
+      1020
+    ]
+  },
+  "fun": {
+    "cer_han": 44.9,
+    "mixed_cer": 49.8,
+    "han_err/total": [
+      440,
+      981
+    ],
+    "mixed_err/total": [
+      508,
+      1020
+    ]
+  }
+}

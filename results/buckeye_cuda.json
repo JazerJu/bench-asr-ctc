@@ -1,0 +1,10 @@
+{
+ "n": 40,
+ "meta": {
+  "providers": "both CUDA"
+ },
+ "wer": {
+  "glm": 36.2,
+  "fun": 41.4
+ }
+}

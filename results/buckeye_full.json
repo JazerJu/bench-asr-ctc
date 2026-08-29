@@ -1,0 +1,13 @@
+{
+ "n": 2477,
+ "skipped_empty": 1,
+ "meta": {
+  "providers": "CUDA",
+  "note": "fun/qwen from 3-way run; glm rerun after WhisperFeatureExtractor local-cache fix (proxy socks:// had forced librosa fallback → 100% blank)"
+ },
+ "wer": {
+  "glm": 22.4,
+  "fun": 26.9,
+  "qwen": 18.1
+ }
+}

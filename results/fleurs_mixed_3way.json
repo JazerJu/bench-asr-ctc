@@ -1,0 +1,174 @@
+{
+  "cmn_hans_cn": {
+    "pure": {
+      "n": 784,
+      "glm": {
+        "cer_han": 9.7,
+        "mixed_cer": 9.7,
+        "han_err/total": [
+          2618,
+          27098
+        ],
+        "mixed_err/total": [
+          2618,
+          27098
+        ],
+        "sec": 62
+      },
+      "fun": {
+        "cer_han": 8.4,
+        "mixed_cer": 8.4,
+        "han_err/total": [
+          2279,
+          27098
+        ],
+        "mixed_err/total": [
+          2280,
+          27098
+        ],
+        "sec": 90
+      },
+      "qwen": {
+        "cer_han": 9.8,
+        "mixed_cer": 9.8,
+        "han_err/total": [
+          2668,
+          27098
+        ],
+        "mixed_err/total": [
+          2668,
+          27098
+        ],
+        "sec": 29
+      }
+    },
+    "mixed": {
+      "n": 161,
+      "glm": {
+        "cer_han": 15.6,
+        "mixed_cer": 19.2,
+        "han_err/total": [
+          930,
+          5961
+        ],
+        "mixed_err/total": [
+          1203,
+          6281
+        ],
+        "sec": 14
+      },
+      "fun": {
+        "cer_han": 13.3,
+        "mixed_cer": 17.0,
+        "han_err/total": [
+          790,
+          5961
+        ],
+        "mixed_err/total": [
+          1070,
+          6281
+        ],
+        "sec": 19
+      },
+      "qwen": {
+        "cer_han": 15.6,
+        "mixed_cer": 19.1,
+        "han_err/total": [
+          929,
+          5961
+        ],
+        "mixed_err/total": [
+          1202,
+          6281
+        ],
+        "sec": 6
+      }
+    }
+  },
+  "yue_hant_hk": {
+    "pure": {
+      "n": 758,
+      "glm": {
+        "cer_han": 42.1,
+        "mixed_cer": 42.1,
+        "han_err/total": [
+          10772,
+          25567
+        ],
+        "mixed_err/total": [
+          10772,
+          25567
+        ],
+        "sec": 62
+      },
+      "fun": {
+        "cer_han": 42.7,
+        "mixed_cer": 42.7,
+        "han_err/total": [
+          10928,
+          25567
+        ],
+        "mixed_err/total": [
+          10929,
+          25567
+        ],
+        "sec": 86
+      },
+      "qwen": {
+        "cer_han": 29.6,
+        "mixed_cer": 29.6,
+        "han_err/total": [
+          7566,
+          25567
+        ],
+        "mixed_err/total": [
+          7566,
+          25567
+        ],
+        "sec": 29
+      }
+    },
+    "mixed": {
+      "n": 61,
+      "glm": {
+        "cer_han": 49.5,
+        "mixed_cer": 51.4,
+        "han_err/total": [
+          1062,
+          2147
+        ],
+        "mixed_err/total": [
+          1155,
+          2248
+        ],
+        "sec": 6
+      },
+      "fun": {
+        "cer_han": 49.2,
+        "mixed_cer": 50.4,
+        "han_err/total": [
+          1056,
+          2147
+        ],
+        "mixed_err/total": [
+          1133,
+          2248
+        ],
+        "sec": 8
+      },
+      "qwen": {
+        "cer_han": 36.3,
+        "mixed_cer": 37.7,
+        "han_err/total": [
+          779,
+          2147
+        ],
+        "mixed_err/total": [
+          847,
+          2248
+        ],
+        "sec": 2
+      }
+    }
+  }
+}

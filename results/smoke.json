@@ -1,0 +1,47 @@
+{
+  "en_us": {
+    "metric": "WER",
+    "train_src": "librispeech+gigaspeech",
+    "n": 50,
+    "glm_er": 19.1,
+    "glm_err/total": [
+      206,
+      1077
+    ],
+    "fun_er": 20.9,
+    "fun_err/total": [
+      225,
+      1077
+    ]
+  },
+  "cmn_hans_cn": {
+    "metric": "CER",
+    "train_src": "aishell1+wenetspeech+magicdata",
+    "n": 50,
+    "glm_er": 12.2,
+    "glm_err/total": [
+      215,
+      1766
+    ],
+    "fun_er": 14.9,
+    "fun_err/total": [
+      264,
+      1766
+    ]
+  },
+  "ko_kr": {
+    "metric": "CER",
+    "train_src": "ksponspeech",
+    "n": 50,
+    "glm_er": 39.8,
+    "glm_err/total": [
+      915,
+      2300
+    ],
+    "fun_er": 45.9,
+    "fun_err/total": [
+      1055,
+      2300
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+ "n": 2477,
+ "skipped_empty": 1,
+ "meta": {
+  "providers": "CUDA"
+ },
+ "wer": {
+  "glm": 22.4
+ }
+}

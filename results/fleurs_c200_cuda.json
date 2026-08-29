@@ -1,0 +1,186 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "200",
+    "engines": {
+      "glm": {
+        "ctc": "GLM-ASR-CTC-Final134k",
+        "quantized": true
+      },
+      "fun": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.27.0",
+    "providers": {
+      "glm": "CUDAExecutionProvider",
+      "fun": "CUDAExecutionProvider"
+    },
+    "timestamp": "2026-08-28 09:24:35"
+  },
+  "results": {
+    "en_us": {
+      "metric": "WER",
+      "train_src": "librispeech+gigaspeech",
+      "n": 200,
+      "glm_er": 18.5,
+      "glm_err/total": [
+        786,
+        4256
+      ],
+      "fun_er": 18.6,
+      "fun_err/total": [
+        792,
+        4256
+      ]
+    },
+    "cmn_hans_cn": {
+      "metric": "CER",
+      "train_src": "aishell1+wenetspeech+magicdata",
+      "n": 200,
+      "glm_er": 11.1,
+      "glm_err/total": [
+        754,
+        6805
+      ],
+      "fun_er": 8.7,
+      "fun_err/total": [
+        594,
+        6805
+      ]
+    },
+    "ko_kr": {
+      "metric": "CER",
+      "train_src": "ksponspeech",
+      "n": 200,
+      "glm_er": 39.2,
+      "glm_err/total": [
+        3436,
+        8765
+      ],
+      "fun_er": 46.0,
+      "fun_err/total": [
+        4028,
+        8765
+      ]
+    },
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 200,
+      "glm_er": 31.9,
+      "glm_err/total": [
+        3054,
+        9570
+      ],
+      "fun_er": 17.8,
+      "fun_err/total": [
+        1705,
+        9570
+      ]
+    },
+    "yue_hant_hk": {
+      "metric": "CER",
+      "train_src": "cv_yue",
+      "n": 200,
+      "glm_er": 41.6,
+      "glm_err/total": [
+        2917,
+        7006
+      ],
+      "fun_er": 42.6,
+      "fun_err/total": [
+        2985,
+        7006
+      ]
+    },
+    "de_de": {
+      "metric": "WER",
+      "train_src": "mls_german",
+      "n": 200,
+      "glm_er": 36.9,
+      "glm_err/total": [
+        1568,
+        4248
+      ],
+      "fun_er": 76.1,
+      "fun_err/total": [
+        3234,
+        4248
+      ]
+    },
+    "fr_fr": {
+      "metric": "WER",
+      "train_src": "mls_french",
+      "n": 200,
+      "glm_er": 41.1,
+      "glm_err/total": [
+        1973,
+        4804
+      ],
+      "fun_er": 76.5,
+      "fun_err/total": [
+        3677,
+        4804
+      ]
+    },
+    "es_419": {
+      "metric": "WER",
+      "train_src": "mls_spanish",
+      "n": 200,
+      "glm_er": 28.9,
+      "glm_err/total": [
+        1433,
+        4963
+      ],
+      "fun_er": 62.1,
+      "fun_err/total": [
+        3080,
+        4963
+      ]
+    },
+    "it_it": {
+      "metric": "WER",
+      "train_src": "mls_italian",
+      "n": 200,
+      "glm_er": 42.0,
+      "glm_err/total": [
+        1942,
+        4629
+      ],
+      "fun_er": 85.9,
+      "fun_err/total": [
+        3976,
+        4629
+      ]
+    },
+    "nl_nl": {
+      "metric": "WER",
+      "train_src": "mls_dutch",
+      "n": 200,
+      "glm_er": 46.3,
+      "glm_err/total": [
+        2080,
+        4495
+      ],
+      "fun_er": 95.5,
+      "fun_err/total": [
+        4292,
+        4495
+      ]
+    },
+    "pl_pl": {
+      "metric": "WER",
+      "train_src": "mls_polish",
+      "n": 200,
+      "glm_er": 69.5,
+      "glm_err/total": [
+        2480,
+        3568
+      ],
+      "fun_er": 99.0,
+      "fun_err/total": [
+        3532,
+        3568
+      ]
+    }
+  }
+}

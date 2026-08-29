@@ -1,0 +1,30 @@
+{
+ "gpu": "RTX 5070 Ti, warm median, int4/fp16 ONNX + q5 decoder",
+ "ctc_only_ms": {
+  "glm": {"5s": 47, "30s": 194},
+  "fun": {"5s": 27, "30s": 48},
+  "qwen": {"5s": 32, "30s": 51}
+ },
+ "full_pipeline_ms": {
+  "fun": {
+   "5s": 57,
+   "30s": 275,
+   "note": "CUDA ONNX + CUDA llama; llama MUST init before ORT CUDA. Decoder q5_k 424MB, 17/118 gen tokens"
+  },
+  "qwen": {
+   "5s": 93,
+   "30s": 433,
+   "note": "CUDA encoder/CTC q4 + decoder q5_k_m 1.2GB, 18/126 gen tokens, 4D mRoPE inject"
+  },
+  "glm": {
+   "5s": 130,
+   "30s": 780,
+   "note": "CUDA ONNX + CUDA llama, decoder q5_k_m 1.1GB"
+  }
+ },
+ "as_shipped_fun_ms": {
+  "5s": 231,
+  "30s": 1150,
+  "note": "CapsWriter Linux default: ONNX CPU (no DML, encoder had no CUDA path) + llama CUDA. Encoder alone 177/761 ms"
+ }
+}
