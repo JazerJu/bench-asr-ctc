@@ -34,20 +34,41 @@ def _ensure_cudnn():
             return
 
 
+def _ort_providers(use_gpu: bool):
+    want = (os.environ.get("BENCH_ORT_PROVIDER") or "auto").lower()
+    avail = set(ort.get_available_providers())
+    if (not use_gpu) or want == "cpu":
+        return ["CPUExecutionProvider"]
+    if want in ("auto", "cuda") and "CUDAExecutionProvider" in avail:
+        _ensure_cudnn()
+        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+    if want in ("auto", "dml") and "DmlExecutionProvider" in avail:
+        return ["DmlExecutionProvider", "CPUExecutionProvider"]
+    if want == "cuda":
+        print("[warn] CUDA EP not installed, using CPU")
+    elif want == "dml":
+        print("[warn] DML EP not installed, using CPU")
+    return ["CPUExecutionProvider"]
+
+
+def _precision_tag(quantized: bool = True) -> str:
+    tag = (os.environ.get("BENCH_PRECISION") or "").lower()
+    if tag in ("q4", "fp16", "fp32"):
+        return tag
+    return "q4" if quantized else "fp32"
+
+
 def _session(onnx_path: Path, use_gpu: bool, intra_threads: int = 6):
     opts = ort.SessionOptions()
     opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-    providers = ["CPUExecutionProvider"]
-    if use_gpu and "CUDAExecutionProvider" in ort.get_available_providers():
-        _ensure_cudnn()
-        providers.insert(0, "CUDAExecutionProvider")
-    else:
+    providers = _ort_providers(use_gpu)
+    if providers[0] == "CPUExecutionProvider":
         opts.intra_op_num_threads = intra_threads
     try:
         return ort.InferenceSession(str(onnx_path), sess_options=opts, providers=providers)
     except Exception:
-        if "CUDAExecutionProvider" in providers:
-            print(f"[warn] CUDA EP failed for {onnx_path.name}, falling back to CPU")
+        if providers[0] != "CPUExecutionProvider":
+            print(f"[warn] {providers[0]} failed for {onnx_path.name}, falling back to CPU")
             return ort.InferenceSession(str(onnx_path), sess_options=opts, providers=["CPUExecutionProvider"])
         raise
 
@@ -94,11 +115,11 @@ class GLMEngine:
 
     def __init__(self, use_gpu: bool = True, quantized: bool = True):
         glm_dir = MODELS_DIR / "glm-ctc"
-        enc_path = glm_dir / "GLM-ASR-Encoder.q4.onnx"
-        enc_data = glm_dir / "GLM-ASR-Encoder.q4.onnx.data"
+        tag = _precision_tag(quantized)
+        enc_path = glm_dir / f"GLM-ASR-Encoder.{tag}.onnx"
+        enc_data = glm_dir / f"GLM-ASR-Encoder.{tag}.onnx.data"
         proj_path = glm_dir / "GLM-ASR-Projector.fp16.onnx"
-        ctc_name = "GLM-ASR-CTC-Final134k.q4.onnx" if quantized else "GLM-ASR-CTC-Final134k.fp32.onnx"
-        ctc_path = glm_dir / ctc_name
+        ctc_path = glm_dir / f"GLM-ASR-CTC-Final134k.{tag}.onnx"
         for p in (enc_path, proj_path, ctc_path):
             if not p.exists():
                 raise FileNotFoundError(
@@ -270,7 +291,7 @@ class QwenEngine:
 
     def __init__(self, use_gpu: bool = True, quantized: bool = True):
         d = MODELS_DIR / "qwen-ctc"
-        tag = "q4" if quantized else "fp32"
+        tag = _precision_tag(quantized)
         self.enc_sess = _session(d / f"Qwen3-ASR-Encoder.{tag}.onnx", use_gpu=use_gpu)
         self.ctc_sess = _session(d / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
         self.id2bytes = {}

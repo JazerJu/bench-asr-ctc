@@ -38,8 +38,13 @@ Reproducibility: `python bench.py --counts 200 --engines glm fun qwen` (~2,200 s
 ```bash
 pip install -r requirements.txt          # onnxruntime-gpu optional
 
-# Everything auto-fetched from HuggingFace (GLM line + Fun-ASR-Nano int4 trio, ~600 MB):
+# Linux / NVIDIA CUDA (int4, default):
 python scripts/download_models.py fetch
+
+# Windows iGPU DirectML (fp16, no MatMulNBits):
+#   pip install onnxruntime-directml
+#   python scripts/download_models.py fetch-fp16
+#   python bench.py --counts 20 --provider dml --precision fp16 --engines glm,qwen
 #    = glm-ctc/  from JazerJu/glm-asr-ctc-bench (encoder q4, projector, CTC final134k q4, tokens)
 #    + fun-asr/  from JazerJu/glm-asr-ctc-bench/fun-asr (int4 trio; FunAudioLLM model,
 #                int4 conversion as packaged by CapsWriter-Offline)

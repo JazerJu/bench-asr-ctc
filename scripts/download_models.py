@@ -48,6 +48,14 @@ QWEN_FILES = [
     "qwen-ctc/preprocessor_config.json",
 ]
 
+FP16_FILES = [
+    "GLM-ASR-Encoder.fp16.onnx",
+    "GLM-ASR-Encoder.fp16.onnx.data",
+    "GLM-ASR-CTC-Final134k.fp16.onnx",
+    "qwen-ctc/Qwen3-ASR-Encoder.fp16.onnx",
+    "qwen-ctc/Qwen3-ASR-CTC.fp16.onnx",
+]
+
 
 def publish():
     """One-time: push our exported/quantized GLM artifacts to the HF repo."""
@@ -98,6 +106,19 @@ def fetch_qwen():
         print(f"qwen: {dst.name} fetched from {HF_REPO}")
 
 
+def fetch_fp16():
+    GLM_DIR.mkdir(parents=True, exist_ok=True)
+    QWEN_DIR.mkdir(parents=True, exist_ok=True)
+    for name in FP16_FILES:
+        dst = (QWEN_DIR if name.startswith("qwen-ctc/") else GLM_DIR) / Path(name).name
+        if dst.exists():
+            print(f"fp16: {dst.name} already present")
+            continue
+        p = hf_hub_download(HF_REPO, name, repo_type="model")
+        shutil.copyfile(p, dst)
+        print(f"fp16: {dst.name} fetched")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "fetch"
     if cmd == "publish":
@@ -106,6 +127,10 @@ if __name__ == "__main__":
         fetch()
         link_fun()
         fetch_qwen()
+        if os.environ.get("FETCH_FP16"):
+            fetch_fp16()
+    elif cmd == "fetch-fp16":
+        fetch_fp16()
     elif cmd == "fun":
         link_fun()
     else:

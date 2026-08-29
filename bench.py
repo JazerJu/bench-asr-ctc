@@ -32,10 +32,16 @@ def main():
     ap.add_argument("--counts", default="100", help="sentences per language, or 'full'")
     ap.add_argument("--engines", default="glm,fun", help="comma list: glm,fun,qwen")
     ap.add_argument("--langs", default=None, help="comma list, e.g. en_us,cmn_hans_cn,ja_jp")
-    ap.add_argument("--cpu", action="store_true", help="force CPU for GLM (Fun always runs CPU)")
+    ap.add_argument("--cpu", action="store_true", help="force CPU")
     ap.add_argument("--fp32", action="store_true", help="use fp32 GLM CTC head instead of int4")
+    ap.add_argument("--provider", default="auto", help="auto|cuda|dml|cpu (Windows iGPU: dml)")
+    ap.add_argument("--precision", default=None, help="q4|fp16|fp32 (Windows DML: fp16)")
     ap.add_argument("--out", default=None, help="output json path (default results/fleurs_c<counts>.json)")
     args = ap.parse_args()
+    import os
+    os.environ["BENCH_ORT_PROVIDER"] = args.provider
+    if args.precision:
+        os.environ["BENCH_PRECISION"] = args.precision
 
     counts = args.counts if args.counts == "full" else str(int(args.counts))
     out = args.out or f"results/fleurs_c{counts}.json"
