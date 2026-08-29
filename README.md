@@ -48,6 +48,11 @@ python scripts/download_models.py fetch
 #    = glm-ctc/  from JazerJu/glm-asr-ctc-bench (encoder q4, projector, CTC final134k q4, tokens)
 #    + fun-asr/  from JazerJu/glm-asr-ctc-bench/fun-asr (int4 trio; FunAudioLLM model,
 #                int4 conversion as packaged by CapsWriter-Offline)
+#    + qwen-ctc/ from JazerJu/glm-asr-ctc-bench/qwen-ctc (encoder q4 + CTC q4 +
+#                tokens.txt + preprocessor_config.json)
+#
+# 一条命令三个引擎全下完。fp16 变体加 FETCH_FP16=1，GLM 的 fp32 加 FETCH_FP32=1。
+# models/ 下的一切都由这一步产生，仓库里不跟踪。
 ```
 
 ## Run

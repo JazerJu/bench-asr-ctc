@@ -1,8 +1,10 @@
-models/**/*.onnx
-models/**/*.onnx.data
-models/qwen-ctc-r2/
+# models/ 整个是下载目标，由 scripts/download_models.py fetch 从
+# JazerJu/glm-asr-ctc-bench 拉取，不进版本库（含 tokens.txt 等小文件，
+# 跟踪它们会和 HF 上的副本悄悄漂移）
+models/
 logs/
 __pycache__/
 *.pyc
 .venv/
 issue_glm_ctc_draft.md
+!models/README.md
