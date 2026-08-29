@@ -105,3 +105,28 @@ scripts/
 - Fun-ASR-Nano: HaujetZhao/CapsWriter-Offline model suite (int4 trio mirrored at JazerJu/glm-asr-ctc-bench/fun-asr)
 - Qwen3 encoder: official `Qwen/Qwen3-ASR-1.7B` audio tower (frozen), int4 by us; CTC head ours (`JazerJu/qwen3-asr-ctc`)
 - FLEURS: `google/fleurs` (CC-BY-4.0), auto-fetched
+
+## 三方对比现状
+
+三个引擎都已接好，``--engines glm fun qwen`` 直接可用：
+
+```bash
+python infer.py cases/zh_news_30s.wav --engine qwen --cpu
+python bench.py --counts 200 --engines glm fun qwen
+```
+
+Qwen3 的 CTC 头有两版权重，实测是一笔交易而非普遍提升 —— 英文更好、中文更差
+（按句配对自举 2000 次，中文退步的 95% CI 为 [+0.07, +0.34] pp，不含 0）：
+
+| 测试集 | 指标 | GLM | Qwen3 v1 | Qwen3 v2 |
+|---|---|---|---|---|
+| AISHELL-1 test | CER | **4.71%** | 5.31% | 5.53% |
+| LibriSpeech test-clean | WER | **4.88%** | 6.93% | 6.53% |
+| LibriSpeech test-other | WER | **9.99%** | 12.40% | 11.93% |
+| ASCEND test | MER | **11.84%** | 14.53% | 14.47% |
+
+models/qwen-ctc/ 放 v1，v2 放 models/qwen-ctc-r2/（两者都已 gitignore）。
+权重见 [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) 与
+[qwen3-asr-ctc-r2](https://huggingface.co/JazerJu/qwen3-asr-ctc-r2)。
+
+工程约定与不变量见 [AGENTS.md](AGENTS.md)。

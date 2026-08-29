@@ -142,9 +142,14 @@ class GLMEngine:
         model_id = os.environ.get("GLM_ASR_MODEL_ID", "zai-org/GLM-ASR-Nano-2512")
         snaps = sorted(Path("/data/.cache/huggingface/hub/models--zai-org--GLM-ASR-Nano-2512/snapshots").glob("*"))
         load_id = str(snaps[-1]) if snaps else model_id
-        self.fe = AutoProcessor.from_pretrained(
+        # AutoProcessor 在新版 transformers 上对这个仓库直接返回
+        # WhisperFeatureExtractor 本身（快照里只有 processor_config.json，
+        # 没有 preprocessor_config.json），再取 .feature_extractor 就
+        # AttributeError。两种返回都接住。
+        proc = AutoProcessor.from_pretrained(
             load_id, trust_remote_code=True, local_files_only=bool(snaps)
-        ).feature_extractor
+        )
+        self.fe = getattr(proc, "feature_extractor", proc)
 
     def _mel(self, audio: np.ndarray) -> np.ndarray:
         if self.fe is not None:

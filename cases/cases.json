@@ -1,0 +1,33 @@
+{
+  "cases": [
+    {
+      "name": "zh_news_30s (睡前消息, Mandarin news)",
+      "audio": "zh_news_30s.wav",
+      "expected_hotwords": [
+        "督工",
+        "睡前消息"
+      ],
+      "notes": "CTC mishears 督工 as 杜工; DP phoneme match should recover it"
+    },
+    {
+      "name": "en_lecture_30s (CMU lecture, pure English)",
+      "audio": "en_lecture_30s.wav",
+      "expected_hotwords": [],
+      "notes": "no hotword from list is spoken; expect zero false positives"
+    },
+    {
+      "name": "zh_en_hotword_cw (sglang talk, 'context window' spoken)",
+      "audio": "zh_en_hotword_cw.wav",
+      "expected_hotwords": [
+        "context windows"
+      ],
+      "notes": "mixed zh/en; CTC emits 'contact window', DP should match 'context windows'"
+    },
+    {
+      "name": "zh_en_mlsys (sglang talk, MLSYS/sglang spoken)",
+      "audio": "zh_en_mlsys.wav",
+      "expected_hotwords": [],
+      "notes": "niche terms not in CTC training data; expected MISS by design (radixark/sglang/mlsys too rare)"
+    }
+  ]
+}
