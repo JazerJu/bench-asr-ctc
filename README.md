@@ -1,5 +1,7 @@
 # bench-asr-ctc
 
+[English](README.md) · [中文](README_zh.md)
+
 Cross-model CTC first-pass benchmark: **GLM-ASR (our trained CTC head) vs Fun-ASR-Nano vs Qwen3-ASR (our trained CTC head)** — three engines, one interface.
 
 Tests three capabilities on identical audio:
@@ -23,7 +25,7 @@ Tests three capabilities on identical audio:
 | nl_nl | WER | 364 | **46.7%** | 95.8% | 50.1% | GLM |
 | pl_pl | WER | 758 | **69.3%** | 98.8% | 77.1% | GLM |
 
-**GLM 7W / Fun 2W / Qwen 2W.** Raw: `results/fleurs_full_3way.json`. Buckeye conversational English (full, 2,477 segs / 20 speakers / 145,690 words, 1 empty skipped): **Qwen 18.1% < GLM 22.4% < Fun 26.9%** (`results/buckeye_full.json`). Spontaneous English still favors Qwen; GLM is clearly ahead of Fun. The earlier 40-seg s01-only slice (Qwen 23.3 / GLM 36.2 / Fun 41.4) was a hard speaker, not the corpus. Read speech (FLEURS en) remains a three-way tie.
+**GLM 6W / Fun 3W / Qwen 2W.** Raw: `results/fleurs_full_3way.json`. Buckeye conversational English (full, 2,477 segs / 20 speakers / 145,690 words, 1 empty skipped): **Qwen 18.1% < GLM 22.4% < Fun 26.9%** (`results/buckeye_full.json`). Spontaneous English still favors Qwen; GLM is clearly ahead of Fun. The earlier 40-seg s01-only slice (Qwen 23.3 / GLM 36.2 / Fun 41.4) was a hard speaker, not the corpus. Read speech (FLEURS en) remains a three-way tie.
 
 **Chinese & zh/en-mixed** (FLEURS sub-cuts, `runners/bench_mixed.py`, 3-way): Mandarin pure CER Fun 8.4 < GLM 9.7 ≈ Qwen 9.8; Mandarin mixed-CER Fun 17.0 < GLM 19.2 ≈ Qwen 19.1 — Fun keeps a small edge on wiki-style read speech. Cantonese (incl. embedded English): Qwen 29.6 pure / 37.7 mixed — 12pp+ ahead of both. Spoken tech-term recall (fq video, 37 windows): Fun 54% > Qwen 32% > GLM 27%, with **complementary misses** — Qwen catches bbr/gfw/cpu that GLM drops, GLM catches ssl that Qwen drops (`results/spoken_term_recall_3way.json`).
 
@@ -51,8 +53,9 @@ python scripts/download_models.py fetch
 #    + qwen-ctc/ from JazerJu/glm-asr-ctc-bench/qwen-ctc (encoder q4 + CTC q4 +
 #                tokens.txt + preprocessor_config.json)
 #
-# 一条命令三个引擎全下完。fp16 变体加 FETCH_FP16=1，GLM 的 fp32 加 FETCH_FP32=1。
-# models/ 下的一切都由这一步产生，仓库里不跟踪。
+# One command pulls all three engines. FETCH_FP16=1 adds the fp16 variants,
+# FETCH_FP32=1 adds GLM's fp32. Everything under models/ comes from this step
+# and is gitignored — the repo tracks no weights.
 ```
 
 ## Run
@@ -84,7 +87,7 @@ Every result JSON records a `meta` block (engine revisions, quantization, ORT ve
 
 ```
 bench/
-  models.py        # engine registry: GLMEngine / FunEngine / QwenEngine(slot)
+  models.py        # engine registry: GLMEngine / FunEngine / QwenEngine
   metrics.py       # WER/CER + per-language normalization
   hotword/         # PhonemeCorrector DP matching (CapsWriter-derived)
 runners/
@@ -111,27 +114,49 @@ scripts/
 - Qwen3 encoder: official `Qwen/Qwen3-ASR-1.7B` audio tower (frozen), int4 by us; CTC head ours (`JazerJu/qwen3-asr-ctc`)
 - FLEURS: `google/fleurs` (CC-BY-4.0), auto-fetched
 
-## 三方对比现状
+## Two Qwen3 CTC head revisions
 
-三个引擎都已接好，``--engines glm fun qwen`` 直接可用：
+`models/qwen-ctc/` holds v1; v2 goes in `models/qwen-ctc-r2/` (both gitignored).
+v2 is **a trade, not a general improvement** — better English, worse Chinese:
 
-```bash
-python infer.py cases/zh_news_30s.wav --engine qwen --cpu
-python bench.py --counts 200 --engines glm fun qwen
-```
-
-Qwen3 的 CTC 头有两版权重，实测是一笔交易而非普遍提升 —— 英文更好、中文更差
-（按句配对自举 2000 次，中文退步的 95% CI 为 [+0.07, +0.34] pp，不含 0）：
-
-| 测试集 | 指标 | GLM | Qwen3 v1 | Qwen3 v2 |
+| test set | metric | GLM | Qwen3 v1 | Qwen3 v2 |
 |---|---|---|---|---|
 | AISHELL-1 test | CER | **4.71%** | 5.31% | 5.53% |
 | LibriSpeech test-clean | WER | **4.88%** | 6.93% | 6.53% |
 | LibriSpeech test-other | WER | **9.99%** | 12.40% | 11.93% |
 | ASCEND test | MER | **11.84%** | 14.53% | 14.47% |
 
-models/qwen-ctc/ 放 v1，v2 放 models/qwen-ctc-r2/（两者都已 gitignore）。
-权重见 [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) 与
-[qwen3-asr-ctc-r2](https://huggingface.co/JazerJu/qwen3-asr-ctc-r2)。
+The Chinese regression is real, not noise: 95% CI [+0.07, +0.34] pp over a
+**sentence-level paired bootstrap** (2000 resamples), which does not contain 0.
 
-工程约定与不变量见 [AGENTS.md](AGENTS.md)。
+> **What "sentence-level paired bootstrap" and "95% CI" mean**
+>
+> A test set is one fixed sample of sentences — what if it happens to favour one
+> model? The bootstrap simulates "what if we drew a different set": resample the
+> same number of sentences **with replacement**, score them, repeat 2000 times,
+> and look at the spread of those 2000 results.
+>
+> **By sentence, not by character** — errors cluster inside an utterance (one bad
+> sentence usually costs a dozen consecutive characters). Treating characters as
+> independent samples overstates the effective sample size several times over and
+> yields confidence intervals that are far too narrow.
+>
+> **Paired** — each resampled set of sentences is scored for **both models at
+> once**, so "was this batch easy or hard" affects both sides equally and cancels
+> in the difference. Measured on aishell1_test, pairing halves the CI width
+> (0.263pp vs 0.529pp); for the same true difference of +0.208pp the paired
+> interval excludes 0 while the unpaired one straddles it and can't call a
+> direction.
+>
+> **95% CI** is the middle 95% of those 2000 differences. **Not containing 0**
+> means the sign is stable no matter which sentences you draw; **straddling 0**
+> means some parallel worlds favour A and others favour B — direction unknown,
+> treat as noise.
+>
+> Implementation: `scripts/bootstrap_compare.py` in
+> [glm-asr-ctc-train](https://github.com/JazerJu/glm-asr-ctc-train).
+
+Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1) and
+[qwen3-asr-ctc-r2](https://huggingface.co/JazerJu/qwen3-asr-ctc-r2) (v2).
+
+Engineering conventions and invariants: [AGENTS.md](AGENTS.md).
