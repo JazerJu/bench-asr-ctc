@@ -87,12 +87,45 @@ def build_fun():
     Fun-ASR-GGUF 仓库里的代码要 CTC ONNX 出两个输出，和 CapsWriter 里只出 indices 的模型对不上，所以走 CW 的引擎。"""
     sys.path.insert(0, str(CW_ROOT))
     from util.fun_asr_gguf.inference.asr_engine import create_asr_engine
-    return create_asr_engine(
+    eng = create_asr_engine(
         encoder_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-Encoder-Adaptor.int4.onnx"),
         ctc_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-CTC.int4.onnx"),
         decoder_gguf_path=str(FUN_MODELS / "Fun-ASR-Nano-Decoder.q5_k.gguf"),
         tokens_path=str(FUN_MODELS / "tokens.txt"),
         hotwords_path=None, enable_ctc=True, n_predict=256, dml_enable=False, verbose=False)
+    _patch_fun_frontend(eng)
+    return eng
+
+
+def _patch_fun_frontend(eng):
+    """运行时把 Fun 前端的 extract 换成 float32 + scipy.fft 多线程版，不改 CapsWriter 的文件。
+
+    原版 30s 音频 fbank+LFR 要 ~16ms，其中 np.fft.rfft 把 float32 升成 float64 单线程算占 7.4ms；
+    改用 scipy.fft.rfft(float32, workers=4)、|.|^2 用 real^2+imag^2，30s 降到 ~4.6ms，log-mel
+    max|diff| 2e-4（均值 5.7）。5s 音频原版本来只要 1ms，几乎没差。
+    """
+    import numpy as np
+    import scipy.fft as sfft
+    import util.fun_asr_gguf.inference.encoder as E
+    enc = next(v for v in vars(eng).values() if isinstance(v, E.AudioEncoder))
+    fe = enc.preprocessor
+    n_fft, hop, half = fe.n_fft, fe.hop_length, fe.n_fft // 2
+    win, filt, pre = fe.window.astype(np.float32), fe.filters.astype(np.float32), fe.pre_emphasis
+
+    def extract(audio):
+        a = audio - np.float32(audio.mean(dtype=np.float64))
+        pe = np.empty_like(a); pe[0] = a[0]; np.subtract(a[1:], pre * a[:-1], out=pe[1:])
+        y = np.pad(pe, (half, half)); n = 1 + (len(y) - n_fft) // hop
+        fr = np.lib.stride_tricks.as_strided(y, shape=(n, n_fft), strides=(y.strides[0] * hop, y.strides[0]))
+        st = sfft.rfft(fr * win, n=n_fft, axis=1, workers=4)
+        lm = np.log((st.real * st.real + st.imag * st.imag) @ filt + np.float32(1e-7))
+        tm = lm.shape[0]; tl = (tm + 5) // 6
+        pad = np.concatenate([np.repeat(lm[:1], 3, 0), lm, np.repeat(lm[-1:], (tl * 6 + 7) - tm, 0)], 0)
+        lfr = np.empty((tl, 560), np.float32)
+        for i in range(7):
+            lfr[:, i * 80:(i + 1) * 80] = pad[i:i + tl * 6:6]
+        return lfr
+    fe.extract = extract
 
 
 def build_qwen():
@@ -136,7 +169,7 @@ def main():
     prev = json.loads(Path(args.out).read_text()) if Path(args.out).exists() else {}
     result = {
         "gpu": "RTX 5070 Ti, warm median of 5, published int4/q4 ONNX (CUDA EP, fp32 activations, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA)",
-        "engines": {"fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp)", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
+        "engines": {"fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp); CPU front-end extract patched to float32 scipy.fft", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
         "wav": str(Path(args.wav).relative_to(ROOT)) if Path(args.wav).is_relative_to(ROOT) else args.wav,
         "definition": {"ctc_only_ms": "encode + ctc", "full_pipeline_ms": "whole decode_stream incl. align"},
         "ctc_only_ms": {}, "full_pipeline_ms": {}, "breakdown_ms": {},
