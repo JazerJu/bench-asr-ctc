@@ -29,7 +29,7 @@ import numpy as np
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parent.parent
-CW_ROOT = Path("/data/AI应用/流式转录/CapsWriter-Offline")
+FUN_ROOT = Path("/data/推理框架/asr-onnx/Fun-ASR-GGUF")
 GLM_ROOT = Path("/data/推理框架/asr-onnx/GLM-ASR-CTC-GGUF")
 QWEN_ROOT = Path("/data/推理框架/asr-onnx/Qwen3-ASR-CTC-GGUF")
 FUN_MODELS = Path("/data/AI应用/流式转录/CapsWriter-Offline/models/Fun-ASR-Nano/Fun-ASR-Nano-GGUF")
@@ -82,17 +82,17 @@ def breakdown(res):
 
 
 def build_fun():
-    """用 CapsWriter 自带的 fun_asr_gguf 后端（用户实际跑的那份）。Fun-ASR-GGUF 仓库里的
-    代码要 CTC ONNX 出两个输出 (topk_log_probs, topk_indices)，而 CapsWriter 的
-    Fun-ASR-Nano-CTC.int4.onnx 已经把 argmax 做进图里只出 indices，两者对不上。"""
-    sys.path.insert(0, str(CW_ROOT))
-    from util.fun_asr_gguf.inference.asr_engine import create_asr_engine
-    return create_asr_engine(
-        encoder_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-Encoder-Adaptor.int4.onnx"),
-        ctc_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-CTC.int4.onnx"),
-        decoder_gguf_path=str(FUN_MODELS / "Fun-ASR-Nano-Decoder.q5_k.gguf"),
-        tokens_path=str(FUN_MODELS / "tokens.txt"),
-        hotwords_path=None, enable_ctc=True, n_predict=256, dml_enable=False, verbose=False)
+    """Fun-ASR-GGUF 仓库引擎 + 仓库导出的 fp16 ONNX，llama.cpp 用和 GLM/Qwen 相同的 sm_120 build。
+    CapsWriter 自带的 util/fun_asr_gguf 走的是它 util/llama/bin 里预编译的 sm_50-80 库（ggml 0.9.4）
+    加 int4 ONNX，在 5070 Ti 上比这里慢约 7%（5s 89 / 30s 348 ms）——部署差异，不是模型差异。"""
+    sys.path.insert(0, str(FUN_ROOT))
+    from fun_asr_gguf import ASREngineConfig, FunASREngine
+    return FunASREngine(ASREngineConfig(
+        encoder_onnx_path=str(FUN_ROOT / "model/Fun-ASR-Nano-Encoder-Adaptor.fp16.onnx"),
+        ctc_onnx_path=str(FUN_ROOT / "model/Fun-ASR-Nano-CTC.fp16.onnx"),
+        decoder_gguf_path=str(FUN_ROOT / "model/Fun-ASR-Nano-Decoder.q5_k.gguf"),
+        tokens_path=str(FUN_ROOT / "model/tokens.txt"),
+        onnx_provider="CUDA", llm_use_gpu=True, enable_ctc=True, verbose=False, n_predict=256))
 
 
 def build_qwen():
@@ -136,7 +136,7 @@ def main():
     prev = json.loads(Path(args.out).read_text()) if Path(args.out).exists() else {}
     result = {
         "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
-        "engines": {"fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
+        "engines": {"fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
         "wav": str(Path(args.wav).relative_to(ROOT)) if Path(args.wav).is_relative_to(ROOT) else args.wav,
         "definition": {"ctc_only_ms": "encode + ctc", "full_pipeline_ms": "whole decode_stream incl. align"},
         "ctc_only_ms": {}, "full_pipeline_ms": {}, "breakdown_ms": {},

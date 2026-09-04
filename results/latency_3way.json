@@ -1,7 +1,7 @@
 {
  "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
  "engines": {
-  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF",
+  "fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen",
   "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
   "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"
  },
@@ -12,8 +12,8 @@
  },
  "ctc_only_ms": {
   "fun": {
-   "5s": 21,
-   "30s": 47
+   "5s": 13,
+   "30s": 32
   },
   "qwen": {
    "5s": 28,
@@ -26,8 +26,8 @@
  },
  "full_pipeline_ms": {
   "fun": {
-   "5s": 88,
-   "30s": 350
+   "5s": 71,
+   "30s": 316
   },
   "qwen": {
    "5s": 100,
@@ -41,24 +41,24 @@
  "breakdown_ms": {
   "fun": {
    "5s": {
-    "encode": 14.3,
-    "ctc": 6.9,
+    "encode": 10.7,
+    "ctc": 2.3,
     "inject": 3.4,
-    "generate": 71.7,
-    "align": 1.6,
-    "ctc_only": 21.2,
-    "n_gen": 28,
-    "text": "大家好，2026年1月11日星期日，欢迎收看10000次起事件。"
+    "generate": 52.0,
+    "align": 1.5,
+    "ctc_only": 13.0,
+    "n_gen": 26,
+    "text": "大家好，2026年1月11日星期日，欢迎收看1004期视频。"
    },
    "30s": {
-    "encode": 37.6,
-    "ctc": 9.3,
-    "inject": 3.7,
-    "generate": 269.8,
-    "align": 35.6,
-    "ctc_only": 46.9,
-    "n_gen": 136,
-    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事研消息。请静静介绍话题。"
+    "encode": 25.6,
+    "ctc": 6.0,
+    "inject": 3.8,
+    "generate": 247.5,
+    "align": 32.1,
+    "ctc_only": 31.7,
+    "n_gen": 134,
+    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事件消息，请静静介绍话题。"
    }
   },
   "qwen": {
