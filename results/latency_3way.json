@@ -1,7 +1,7 @@
 {
  "gpu": "RTX 5070 Ti, warm median of 5, published int4/q4 ONNX (CUDA EP, fp32 activations, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA)",
  "engines": {
-  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp)",
+  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp); CPU front-end extract patched to float32 scipy.fft",
   "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
   "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"
  },
@@ -12,8 +12,8 @@
  },
  "ctc_only_ms": {
   "fun": {
-   "5s": 22,
-   "30s": 42
+   "5s": 21,
+   "30s": 35
   },
   "qwen": {
    "5s": 30,
@@ -26,8 +26,8 @@
  },
  "full_pipeline_ms": {
   "fun": {
-   "5s": 89,
-   "30s": 347
+   "5s": 88,
+   "30s": 337
   },
   "qwen": {
    "5s": 103,
@@ -41,23 +41,23 @@
  "breakdown_ms": {
   "fun": {
    "5s": {
-    "encode": 14.6,
-    "ctc": 7.0,
-    "inject": 3.5,
-    "generate": 59.4,
+    "encode": 14.2,
+    "ctc": 6.9,
+    "inject": 3.4,
+    "generate": 59.5,
     "align": 1.6,
-    "ctc_only": 21.6,
+    "ctc_only": 21.1,
     "n_gen": 28,
     "text": "大家好，2026年1月11日星期日，欢迎收看10000次起事件。"
    },
    "30s": {
-    "encode": 32.9,
-    "ctc": 9.3,
+    "encode": 25.5,
+    "ctc": 9.2,
     "inject": 3.7,
-    "generate": 267.2,
-    "align": 32.1,
-    "ctc_only": 42.1,
-    "n_gen": 136,
+    "generate": 263.9,
+    "align": 30.5,
+    "ctc_only": 34.7,
+    "n_gen": 135,
     "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事研消息。请静静介绍话题。"
    }
   },

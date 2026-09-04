@@ -107,7 +107,8 @@ def _patch_fun_frontend(eng):
     import numpy as np
     import scipy.fft as sfft
     import util.fun_asr_gguf.inference.encoder as E
-    enc = next(v for v in vars(eng).values() if isinstance(v, E.AudioEncoder))
+    holders = [eng, getattr(eng, "models", None), getattr(eng, "engine", None)]
+    enc = next(v for h in holders if h is not None for v in vars(h).values() if isinstance(v, E.AudioEncoder))
     fe = enc.preprocessor
     n_fft, hop, half = fe.n_fft, fe.hop_length, fe.n_fft // 2
     win, filt, pre = fe.window.astype(np.float32), fe.filters.astype(np.float32), fe.pre_emphasis
