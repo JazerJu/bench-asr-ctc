@@ -1,205 +1,175 @@
 #!/usr/bin/env python3
-"""Fair full-pipeline latency: Fun / Qwen / GLM, all CUDA ONNX + CUDA llama."""
+"""三家全流程延迟：Fun / Qwen3-CTC / GLM，同一进程、同一段音频、各自的正式推理包。
 
+每家都跑完整 pipeline（编码 -> CTC 首遍 -> 热词 -> LLM -> 时间戳对齐），从各引擎自带
+的 Timings 里拆出分段：
+    CTC 列        = encode + ctc          （首遍能出字的时刻）
+    加 Decoder 列 = 整条 decode_stream    （含 prefill / 生成 / 对齐）
+全 GPU：ONNX CUDA EP + llama.cpp CUDA。**llama 必须先于 ORT CUDA 初始化**，反过来
+同进程 SIGSEGV —— 三个包的 engine 都已经按这个顺序写好，这里只要按 Fun -> Qwen -> GLM
+依次构造即可（每家构造时都是先 llama 后 ORT）。
+
+    for e in fun qwen glm; do python runners/bench_latency_full.py --engines $e; done
+每次只跑 --engines 指定的引擎，结果合并进 results/latency_3way.json（同进程连跑三家会在
+第三家 abort，见 main 里的注释）。
+"""
 from __future__ import annotations
 
-import os
+import argparse
+import json
 import sys
 import time
 from pathlib import Path
 
+try:
+    import torch  # noqa: F401  — 训练 venv 里 onnxruntime 的 CUDA EP 依赖 torch 预加载的 libcufft.so.12，
+except Exception:  #             不先 import torch 会静默掉回 CPU EP
+    pass
 import numpy as np
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parent.parent
-FUN_ROOT = Path("/data/推理框架/asr-onnx/Fun-ASR-GGUF")
+CW_ROOT = Path("/data/AI应用/流式转录/CapsWriter-Offline")
 GLM_ROOT = Path("/data/推理框架/asr-onnx/GLM-ASR-CTC-GGUF")
 QWEN_ROOT = Path("/data/推理框架/asr-onnx/Qwen3-ASR-CTC-GGUF")
 FUN_MODELS = Path("/data/AI应用/流式转录/CapsWriter-Offline/models/Fun-ASR-Nano/Fun-ASR-Nano-GGUF")
-WAV = Path("/tmp/cmdcpu_test.wav")
 N_WARM, N_RUN = 1, 5
+SECS = (5, 30)
 
 
-def _audio(seconds: float) -> np.ndarray:
-    wav, sr = sf.read(str(WAV), dtype="float32")
+def load_audio(path: Path):
+    wav, sr = sf.read(str(path), dtype="float32")
     if wav.ndim > 1:
         wav = wav.mean(axis=1)
-    need = int(seconds * sr)
+    assert sr == 16000, sr
+    return wav
+
+
+def clip(wav, seconds):
+    need = int(seconds * 16000)
     if len(wav) >= need:
         return wav[:need]
-    reps = (need + len(wav) - 1) // len(wav)
-    return np.tile(wav, reps)[:need]
+    return np.tile(wav, (need + len(wav) - 1) // len(wav))[:need]
 
 
-def _median_ms(fn, n_warm=N_WARM, n_run=N_RUN) -> float:
-    for _ in range(n_warm):
-        fn()
-    ts = []
-    for _ in range(n_run):
+def measure(engine, audio, temperature=0.0):
+    """返回 (中位总耗时 ms, 最后一次的 DecodeResult)。"""
+    def run():
+        st = engine.create_stream()
+        st.accept_waveform(16000, audio)
+        return engine.decode_stream(st, verbose=False, temperature=temperature)
+    for _ in range(N_WARM):
+        run()
+    ts, res = [], None
+    for _ in range(N_RUN):
         t0 = time.perf_counter()
-        fn()
+        res = run()
         ts.append((time.perf_counter() - t0) * 1000)
     ts.sort()
-    return ts[len(ts) // 2]
+    return ts[len(ts) // 2], res
 
 
-def bench_fun():
-    sys.path.insert(0, str(FUN_ROOT))
-    from fun_asr_gguf import ASREngineConfig, FunASREngine
+def breakdown(res):
+    T = res.timings
+    ms = lambda x: round(x * 1000, 1)
+    return {
+        "encode": ms(T.encode), "ctc": ms(T.ctc), "inject": ms(T.inject),
+        "generate": ms(T.llm_generate), "align": ms(T.align),
+        "ctc_only": ms(T.encode + T.ctc),
+        "n_gen": int(getattr(res, "n_gen", getattr(res, "n_generated_tokens", 0))),
+        "text": res.text[:40],
+    }
 
-    cfg = ASREngineConfig(
+
+def build_fun():
+    """用 CapsWriter 自带的 fun_asr_gguf 后端（用户实际跑的那份）。Fun-ASR-GGUF 仓库里的
+    代码要 CTC ONNX 出两个输出 (topk_log_probs, topk_indices)，而 CapsWriter 的
+    Fun-ASR-Nano-CTC.int4.onnx 已经把 argmax 做进图里只出 indices，两者对不上。"""
+    sys.path.insert(0, str(CW_ROOT))
+    from util.fun_asr_gguf.inference.asr_engine import create_asr_engine
+    return create_asr_engine(
         encoder_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-Encoder-Adaptor.int4.onnx"),
         ctc_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-CTC.int4.onnx"),
         decoder_gguf_path=str(FUN_MODELS / "Fun-ASR-Nano-Decoder.q5_k.gguf"),
         tokens_path=str(FUN_MODELS / "tokens.txt"),
-        onnx_provider="CUDA",
-        llm_use_gpu=True,
-        enable_ctc=True,
-        verbose=False,
-        n_predict=256,
-    )
-    engine = FunASREngine(cfg)
-    out = {}
-    for sec in (5, 30):
-        audio = _audio(sec)
-
-        def run(a=audio):
-            stream = engine.create_stream()
-            stream.accept_waveform(16000, a)
-            return engine.decode_stream(stream, verbose=False, temperature=0.0)
-
-        text = run().text
-        out[sec] = round(_median_ms(run))
-        print(f"  fun {sec}s  {out[sec]} ms  text[:60]={text[:60]!r}")
-    engine.cleanup()
-    return out
+        hotwords_path=None, enable_ctc=True, n_predict=256, dml_enable=False, verbose=False)
 
 
-def bench_qwen():
-    sys.path.insert(0, str(GLM_ROOT))
-    import onnxruntime as ort
-    from transformers import WhisperFeatureExtractor
-    from glm_asr_ctc import llama_cpp_bindings as llama
-
-    providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-    enc = ort.InferenceSession(str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.q4.onnx"), providers=providers)
-    ctc = ort.InferenceSession(str(QWEN_ROOT / "model/Qwen3-ASR-CTC.q4.onnx"), providers=providers)
-    fe = WhisperFeatureExtractor.from_pretrained(str(QWEN_ROOT / "preprocessor"), local_files_only=True)
-    model = llama.LlamaModel(str(QWEN_ROOT / "model/Qwen3-ASR-Decoder.q5_k_m.gguf"), use_gpu=True)
-    ctx = llama.LlamaContext(model, n_ctx=4096, n_batch=4096, n_ubatch=512)
-    table = llama.get_token_embeddings_gguf(str(QWEN_ROOT / "model/Qwen3-ASR-Decoder.q5_k_m.gguf"))
-
-    def tok_id(s):
-        ids = model.tokenize(s, add_special=False, parse_special=True)
-        return ids[0] if ids else -1
-
-    ID_IM_START = tok_id("<|im_start|>")
-    ID_IM_END = tok_id("<|im_end|>")
-    ID_AUDIO_START = tok_id("<|audio_start|>")
-    ID_AUDIO_END = tok_id("<|audio_end|>")
-    ID_ASR_TEXT = tok_id("<asr_text>")
-    print(f"  qwen specials start={ID_IM_START} audio={ID_AUDIO_START} asr={ID_ASR_TEXT} n_embd={model.n_embd}")
-
-    def encode(audio):
-        mel = fe(audio, sampling_rate=16000, padding=False, return_tensors="np").input_features[0]
-        T = mel.shape[1]
-        padded = np.zeros((128, 3000), dtype=np.float32)
-        padded[:, :T] = mel
-        hidden = enc.run(None, {"input_features": padded, "feature_length": np.array([T], np.int64)})[0]
-        full, leave = divmod(T, 100)
-        valid = full * 13 + (0 if leave == 0 else (leave - 1) // 8 + 1)
-        audio_embd = hidden[:valid].astype(np.float32)
-        _ = ctc.run(None, {"enc_output": audio_embd[None]})
-        return audio_embd
-
-    def transcribe(audio):
-        audio_embd = encode(audio)
-        prefix = [ID_IM_START] + model.tokenize("system\nYou are a helpful assistant.") + [ID_IM_END]
-        prefix += [ID_IM_START] + model.tokenize("user\n") + [ID_AUDIO_START]
-        suffix = [ID_AUDIO_END, ID_IM_END, ID_IM_START] + model.tokenize("assistant\n") + [ID_ASR_TEXT]
-        n_pre, n_aud, n_suf = len(prefix), audio_embd.shape[0], len(suffix)
-        full = np.zeros((n_pre + n_aud + n_suf, model.n_embd), np.float32)
-        full[:n_pre] = table[prefix]
-        full[n_pre:n_pre + n_aud] = audio_embd
-        full[n_pre + n_aud:] = table[suffix]
-        n = full.shape[0]
-        pos = np.arange(n, dtype=np.int32)
-        pos_arr = np.concatenate([pos, pos, pos, np.zeros(n, dtype=np.int32)])
-        ctx.clear_kv_cache()
-        batch = llama.LlamaBatch(max(n * 4, 8192), model.n_embd, 1)
-        batch.set_embd(full, pos=pos_arr)
-        if ctx.decode(batch) != 0:
-            raise RuntimeError("qwen prefill failed")
-        pieces = []
-        with llama.LlamaSampler(temperature=0.0, top_k=1, top_p=1.0, seed=0) as smpl:
-            for _ in range(256):
-                tid = smpl.sample(ctx, -1)
-                if tid in (model.eos_token, ID_IM_END):
-                    break
-                if ctx.decode_token(tid) != 0:
-                    break
-                pieces.append(tid)
-        return model.detokenize(pieces)
-
-    out = {}
-    for sec in (5, 30):
-        audio = _audio(sec)
-        text = transcribe(audio)
-        out[sec] = round(_median_ms(lambda a=audio: transcribe(a)))
-        print(f"  qwen {sec}s  {out[sec]} ms  text[:60]={text[:60]!r}")
-    return out
+def build_qwen():
+    sys.path.insert(0, str(QWEN_ROOT))
+    from qwen3_asr_ctc import create_asr_engine
+    return create_asr_engine(
+        encoder_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.q4.onnx"),
+        ctc_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-CTC.q4.onnx"),
+        tokens_path=str(QWEN_ROOT / "model/tokens.txt"),
+        preprocessor_path=str(QWEN_ROOT / "preprocessor"),
+        decoder_gguf_path=str(QWEN_ROOT / "model/Qwen3-ASR-Decoder.q5_k_m.gguf"),
+        n_predict=256)
 
 
-def bench_glm():
+def build_glm():
     sys.path.insert(0, str(GLM_ROOT))
     from glm_asr_ctc.engine import ASREngineConfig, GLMASREngine
-
     snaps = sorted(Path("/data/.cache/huggingface/hub/models--zai-org--GLM-ASR-Nano-2512/snapshots").glob("*"))
-    cfg = ASREngineConfig(
+    return GLMASREngine(ASREngineConfig(
         model_id=str(snaps[-1]) if snaps else "",
         encoder_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Encoder.q4.onnx"),
         projector_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Projector.fp16.onnx"),
         ctc_onnx_path=str(GLM_ROOT / "model/GLM-ASR-CTC-Final134k.q4.onnx"),
         decoder_gguf_path=str(GLM_ROOT / "model/GLM-ASR-Nano-Decoder.q5_k_m.gguf"),
         tokens_path=str(GLM_ROOT / "model/tokens-phase2.txt"),
-        onnx_provider="CUDA",
-        llm_use_gpu=True,
-        verbose=False,
-        n_predict=256,
-    )
-    engine = GLMASREngine(cfg)
-    out = {}
-    for sec in (5, 30):
-        audio = _audio(sec)
+        onnx_provider="CUDA", llm_use_gpu=True, verbose=False, n_predict=256))
 
-        def run(a=audio):
-            stream = engine.create_stream()
-            stream.accept_waveform(16000, a)
-            return engine.decode_stream(stream, verbose=False, temperature=0.0)
 
-        text = run().text
-        out[sec] = round(_median_ms(run))
-        print(f"  glm {sec}s  {out[sec]} ms  text[:60]={text[:60]!r}")
-    return out
+BUILDERS = {"fun": build_fun, "qwen": build_qwen, "glm": build_glm}
 
 
 def main():
-    print("== Fun CUDA ONNX + CUDA llama ==")
-    fun = bench_fun()
-    print("== Qwen CUDA ONNX + CUDA llama ==")
-    qwen = bench_qwen()
-    print("== skip GLM remeasure (CapsWriter server holds the weights) ==")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--wav", default=str(ROOT / "cases/zh_news_30s.wav"))
+    ap.add_argument("--engines", default="fun,qwen,glm")
+    ap.add_argument("--out", default=str(ROOT / "results/latency_3way.json"))
+    args = ap.parse_args()
+    wav = load_audio(Path(args.wav))
+    # 三家各起一个进程再合并：同进程里连跑三个 llama.cpp 上下文，第三个（GLM 30s）会在
+    # ggml-cuda.cu:103 abort；分进程还能保证每家测的时候 GPU 状态干净。
+    prev = json.loads(Path(args.out).read_text()) if Path(args.out).exists() else {}
     result = {
-        "gpu": "RTX 5070 Ti, warm median, int4 ONNX + q5 decoder, CUDA EP + llama CUDA",
-        "full_pipeline_ms": {
-            "fun": {"5s": fun[5], "30s": fun[30]},
-            "qwen": {"5s": qwen[5], "30s": qwen[30]},
-        },
+        "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
+        "engines": {"fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
+        "wav": str(Path(args.wav).relative_to(ROOT)) if Path(args.wav).is_relative_to(ROOT) else args.wav,
+        "definition": {"ctc_only_ms": "encode + ctc", "full_pipeline_ms": "whole decode_stream incl. align"},
+        "ctc_only_ms": {}, "full_pipeline_ms": {}, "breakdown_ms": {},
     }
-    out = ROOT / "results/latency_full_cuda.json"
-    out.write_text(__import__("json").dumps(result, indent=1, ensure_ascii=False))
-    print("wrote", out)
-    print(result)
+    for k in ("ctc_only_ms", "full_pipeline_ms", "breakdown_ms"):
+        result[k].update(prev.get(k, {}))
+    for name in args.engines.split(","):
+        print(f"== {name} ==", flush=True)
+        eng = BUILDERS[name]()
+        result["ctc_only_ms"][name] = {}
+        result["full_pipeline_ms"][name] = {}
+        result["breakdown_ms"][name] = {}
+        for sec in SECS:
+            total, res = measure(eng, clip(wav, sec))
+            b = breakdown(res)
+            result["ctc_only_ms"][name][f"{sec}s"] = round(b["ctc_only"])
+            result["full_pipeline_ms"][name][f"{sec}s"] = round(total)
+            result["breakdown_ms"][name][f"{sec}s"] = b
+            print(f"  {sec:>2}s  total={total:7.1f}  enc={b['encode']:6.1f} ctc={b['ctc']:6.1f} "
+                  f"inject={b['inject']:5.1f} gen={b['generate']:6.1f} align={b['align']:6.1f} "
+                  f"n_gen={b['n_gen']}  {b['text']!r}", flush=True)
+        try:
+            eng.cleanup()
+        except Exception:
+            pass
+    Path(args.out).write_text(json.dumps(result, indent=1, ensure_ascii=False))
+    print("wrote", args.out)
+    print("\n|          | CTC 5s | CTC 30s | 加 Decoder 5s | 加 Decoder 30s |")
+    print("| -------- | ------ | ------- | ------------- | -------------- |")
+    label = {"fun": "Fun", "qwen": "Qwen-CTC", "glm": "GLM"}
+    for name in [n for n in ("fun", "qwen", "glm") if n in result["full_pipeline_ms"]]:
+        c, f = result["ctc_only_ms"][name], result["full_pipeline_ms"][name]
+        print(f"| {label[name]:<8} | {c['5s']:>6} | {c['30s']:>7} | {f['5s']:>13} | {f['30s']:>14} |")
 
 
 if __name__ == "__main__":

@@ -1,30 +1,109 @@
 {
- "gpu": "RTX 5070 Ti, warm median, int4/fp16 ONNX + q5 decoder",
+ "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
+ "engines": {
+  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF",
+  "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
+  "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"
+ },
+ "wav": "cases/zh_news_30s.wav",
+ "definition": {
+  "ctc_only_ms": "encode + ctc",
+  "full_pipeline_ms": "whole decode_stream incl. align"
+ },
  "ctc_only_ms": {
-  "glm": {"5s": 47, "30s": 194},
-  "fun": {"5s": 27, "30s": 48},
-  "qwen": {"5s": 32, "30s": 51}
+  "fun": {
+   "5s": 21,
+   "30s": 47
+  },
+  "qwen": {
+   "5s": 28,
+   "30s": 46
+  },
+  "glm": {
+   "5s": 42,
+   "30s": 172
+  }
  },
  "full_pipeline_ms": {
   "fun": {
-   "5s": 57,
-   "30s": 275,
-   "note": "CUDA ONNX + CUDA llama; llama MUST init before ORT CUDA. Decoder q5_k 424MB, 17/118 gen tokens"
+   "5s": 88,
+   "30s": 350
   },
   "qwen": {
-   "5s": 93,
-   "30s": 433,
-   "note": "CUDA encoder/CTC q4 + decoder q5_k_m 1.2GB, 18/126 gen tokens, 4D mRoPE inject"
+   "5s": 100,
+   "30s": 401
   },
   "glm": {
-   "5s": 130,
-   "30s": 780,
-   "note": "CUDA ONNX + CUDA llama, decoder q5_k_m 1.1GB"
+   "5s": 103,
+   "30s": 495
   }
  },
- "as_shipped_fun_ms": {
-  "5s": 231,
-  "30s": 1150,
-  "note": "CapsWriter Linux default: ONNX CPU (no DML, encoder had no CUDA path) + llama CUDA. Encoder alone 177/761 ms"
+ "breakdown_ms": {
+  "fun": {
+   "5s": {
+    "encode": 14.3,
+    "ctc": 6.9,
+    "inject": 3.4,
+    "generate": 71.7,
+    "align": 1.6,
+    "ctc_only": 21.2,
+    "n_gen": 28,
+    "text": "大家好，2026年1月11日星期日，欢迎收看10000次起事件。"
+   },
+   "30s": {
+    "encode": 37.6,
+    "ctc": 9.3,
+    "inject": 3.7,
+    "generate": 269.8,
+    "align": 35.6,
+    "ctc_only": 46.9,
+    "n_gen": 136,
+    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事研消息。请静静介绍话题。"
+   }
+  },
+  "qwen": {
+   "5s": {
+    "encode": 23.0,
+    "ctc": 5.0,
+    "inject": 3.2,
+    "generate": 67.9,
+    "align": 0.3,
+    "ctc_only": 28.0,
+    "n_gen": 26,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时》。"
+   },
+   "30s": {
+    "encode": 26.7,
+    "ctc": 19.7,
+    "inject": 5.7,
+    "generate": 344.6,
+    "align": 2.5,
+    "ctc_only": 46.4,
+    "n_gen": 137,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时间消息》，请静静介绍"
+   }
+  },
+  "glm": {
+   "5s": {
+    "encode": 31.0,
+    "ctc": 10.6,
+    "inject": 2.6,
+    "generate": 56.4,
+    "align": 1.9,
+    "ctc_only": 41.6,
+    "n_gen": 24,
+    "text": "大家好，2026年1月11日星期日，欢迎收看104期。"
+   },
+   "30s": {
+    "encode": 112.2,
+    "ctc": 59.8,
+    "inject": 3.7,
+    "generate": 306.7,
+    "align": 11.8,
+    "ctc_only": 171.9,
+    "n_gen": 138,
+    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静您介绍话题。"
+   }
+  }
  }
 }
