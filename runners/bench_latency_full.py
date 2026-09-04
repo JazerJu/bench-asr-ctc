@@ -29,7 +29,8 @@ import numpy as np
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parent.parent
-FUN_ROOT = Path("/data/推理框架/asr-onnx/Fun-ASR-GGUF")
+CW_ROOT = Path("/data/AI应用/流式转录/CapsWriter-Offline")
+FUN_MODELS = CW_ROOT / "models/Fun-ASR-Nano/Fun-ASR-Nano-GGUF"
 GLM_ROOT = Path("/data/推理框架/asr-onnx/GLM-ASR-CTC-GGUF")
 QWEN_ROOT = Path("/data/推理框架/asr-onnx/Qwen3-ASR-CTC-GGUF")
 FUN_MODELS = Path("/data/AI应用/流式转录/CapsWriter-Offline/models/Fun-ASR-Nano/Fun-ASR-Nano-GGUF")
@@ -82,25 +83,24 @@ def breakdown(res):
 
 
 def build_fun():
-    """Fun-ASR-GGUF 仓库引擎 + 仓库导出的 fp16 ONNX，llama.cpp 用和 GLM/Qwen 相同的 sm_120 build。
-    CapsWriter 自带的 util/fun_asr_gguf 走的是它 util/llama/bin 里预编译的 sm_50-80 库（ggml 0.9.4）
-    加 int4 ONNX，在 5070 Ti 上比这里慢约 7%（5s 89 / 30s 348 ms）——部署差异，不是模型差异。"""
-    sys.path.insert(0, str(FUN_ROOT))
-    from fun_asr_gguf import ASREngineConfig, FunASREngine
-    return FunASREngine(ASREngineConfig(
-        encoder_onnx_path=str(FUN_ROOT / "model/Fun-ASR-Nano-Encoder-Adaptor.fp16.onnx"),
-        ctc_onnx_path=str(FUN_ROOT / "model/Fun-ASR-Nano-CTC.fp16.onnx"),
-        decoder_gguf_path=str(FUN_ROOT / "model/Fun-ASR-Nano-Decoder.q5_k.gguf"),
-        tokens_path=str(FUN_ROOT / "model/tokens.txt"),
-        onnx_provider="CUDA", llm_use_gpu=True, enable_ctc=True, verbose=False, n_predict=256))
+    """CapsWriter 部署的 Fun：util/fun_asr_gguf 引擎 + models/ 里发布的 int4 ONNX + 它自带的 llama.cpp 库。
+    Fun-ASR-GGUF 仓库里的代码要 CTC ONNX 出两个输出，和 CapsWriter 里只出 indices 的模型对不上，所以走 CW 的引擎。"""
+    sys.path.insert(0, str(CW_ROOT))
+    from util.fun_asr_gguf.inference.asr_engine import create_asr_engine
+    return create_asr_engine(
+        encoder_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-Encoder-Adaptor.int4.onnx"),
+        ctc_onnx_path=str(FUN_MODELS / "Fun-ASR-Nano-CTC.int4.onnx"),
+        decoder_gguf_path=str(FUN_MODELS / "Fun-ASR-Nano-Decoder.q5_k.gguf"),
+        tokens_path=str(FUN_MODELS / "tokens.txt"),
+        hotwords_path=None, enable_ctc=True, n_predict=256, dml_enable=False, verbose=False)
 
 
 def build_qwen():
     sys.path.insert(0, str(QWEN_ROOT))
     from qwen3_asr_ctc import create_asr_engine
     return create_asr_engine(
-        encoder_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.fp16.onnx"),   # CUDA EP 上 fp16 比 q4 快一倍，q4 是给 DML 的
-        ctc_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-CTC.fp16.onnx"),
+        encoder_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.q4.onnx"),   # 表按发布的 q4 计；CUDA 上 fp16 / q4f16 快一倍，见 README
+        ctc_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-CTC.q4.onnx"),
         tokens_path=str(QWEN_ROOT / "model/tokens.txt"),
         preprocessor_path=str(QWEN_ROOT / "preprocessor"),
         decoder_gguf_path=str(QWEN_ROOT / "model/Qwen3-ASR-Decoder.q5_k_m.gguf"),
@@ -113,9 +113,9 @@ def build_glm():
     snaps = sorted(Path("/data/.cache/huggingface/hub/models--zai-org--GLM-ASR-Nano-2512/snapshots").glob("*"))
     return GLMASREngine(ASREngineConfig(
         model_id=str(snaps[-1]) if snaps else "",
-        encoder_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Encoder.fp16.onnx"),
+        encoder_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Encoder.q4.onnx"),
         projector_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Projector.fp16.onnx"),
-        ctc_onnx_path=str(GLM_ROOT / "model/GLM-ASR-CTC-Final134k.fp16.onnx"),
+        ctc_onnx_path=str(GLM_ROOT / "model/GLM-ASR-CTC-Final134k.q4.onnx"),
         decoder_gguf_path=str(GLM_ROOT / "model/GLM-ASR-Nano-Decoder.q5_k_m.gguf"),
         tokens_path=str(GLM_ROOT / "model/tokens-phase2.txt"),
         onnx_provider="CUDA", llm_use_gpu=True, verbose=False, n_predict=256))
@@ -135,8 +135,8 @@ def main():
     # ggml-cuda.cu:103 abort；分进程还能保证每家测的时候 GPU 状态干净。
     prev = json.loads(Path(args.out).read_text()) if Path(args.out).exists() else {}
     result = {
-        "gpu": "RTX 5070 Ti, warm median of 5, fp16 ONNX (CUDA EP, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA, same sm_120 build)",
-        "engines": {"fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
+        "gpu": "RTX 5070 Ti, warm median of 5, published int4/q4 ONNX (CUDA EP, fp32 activations, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA)",
+        "engines": {"fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp)", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
         "wav": str(Path(args.wav).relative_to(ROOT)) if Path(args.wav).is_relative_to(ROOT) else args.wav,
         "definition": {"ctc_only_ms": "encode + ctc", "full_pipeline_ms": "whole decode_stream incl. align"},
         "ctc_only_ms": {}, "full_pipeline_ms": {}, "breakdown_ms": {},

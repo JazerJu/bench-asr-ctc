@@ -1,7 +1,7 @@
 {
- "gpu": "RTX 5070 Ti, warm median of 5, fp16 ONNX (CUDA EP, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA, same sm_120 build)",
+ "gpu": "RTX 5070 Ti, warm median of 5, published int4/q4 ONNX (CUDA EP, fp32 activations, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA)",
  "engines": {
-  "fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen",
+  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF int4 (bundled llama.cpp)",
   "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
   "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"
  },
@@ -12,97 +12,97 @@
  },
  "ctc_only_ms": {
   "fun": {
-   "5s": 13,
-   "30s": 32
+   "5s": 22,
+   "30s": 42
   },
   "qwen": {
-   "5s": 17,
-   "30s": 22
+   "5s": 30,
+   "30s": 35
   },
   "glm": {
-   "5s": 21,
-   "30s": 70
+   "5s": 37,
+   "30s": 127
   }
  },
  "full_pipeline_ms": {
   "fun": {
-   "5s": 71,
-   "30s": 316
+   "5s": 89,
+   "30s": 347
   },
   "qwen": {
-   "5s": 93,
-   "30s": 379
+   "5s": 103,
+   "30s": 390
   },
   "glm": {
-   "5s": 82,
-   "30s": 394
+   "5s": 99,
+   "30s": 452
   }
  },
  "breakdown_ms": {
   "fun": {
    "5s": {
-    "encode": 10.7,
-    "ctc": 2.3,
-    "inject": 3.4,
-    "generate": 52.0,
-    "align": 1.5,
-    "ctc_only": 13.0,
-    "n_gen": 26,
-    "text": "大家好，2026年1月11日星期日，欢迎收看1004期视频。"
+    "encode": 14.6,
+    "ctc": 7.0,
+    "inject": 3.5,
+    "generate": 59.4,
+    "align": 1.6,
+    "ctc_only": 21.6,
+    "n_gen": 28,
+    "text": "大家好，2026年1月11日星期日，欢迎收看10000次起事件。"
    },
    "30s": {
-    "encode": 25.6,
-    "ctc": 6.0,
-    "inject": 3.8,
-    "generate": 247.5,
+    "encode": 32.9,
+    "ctc": 9.3,
+    "inject": 3.7,
+    "generate": 267.2,
     "align": 32.1,
-    "ctc_only": 31.7,
-    "n_gen": 134,
-    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事件消息，请静静介绍话题。"
+    "ctc_only": 42.1,
+    "n_gen": 136,
+    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事研消息。请静静介绍话题。"
    }
   },
   "qwen": {
    "5s": {
-    "encode": 11.4,
-    "ctc": 6.0,
-    "inject": 3.2,
-    "generate": 70.7,
+    "encode": 23.3,
+    "ctc": 7.1,
+    "inject": 3.1,
+    "generate": 68.1,
     "align": 0.3,
-    "ctc_only": 17.4,
-    "n_gen": 27,
-    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时事》。"
+    "ctc_only": 30.5,
+    "n_gen": 26,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时》。"
    },
    "30s": {
-    "encode": 13.9,
-    "ctc": 8.4,
-    "inject": 4.9,
-    "generate": 347.4,
+    "encode": 25.5,
+    "ctc": 9.6,
+    "inject": 5.0,
+    "generate": 345.8,
     "align": 2.5,
-    "ctc_only": 22.3,
+    "ctc_only": 35.1,
     "n_gen": 137,
-    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零四期《世言消息》，请静静介绍话"
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时间消息》，请静静介绍"
    }
   },
   "glm": {
    "5s": {
-    "encode": 14.5,
-    "ctc": 6.2,
-    "inject": 2.5,
-    "generate": 56.6,
-    "align": 1.5,
-    "ctc_only": 20.7,
+    "encode": 30.0,
+    "ctc": 7.1,
+    "inject": 3.0,
+    "generate": 58.0,
+    "align": 1.6,
+    "ctc_only": 37.1,
     "n_gen": 24,
     "text": "大家好，2026年1月11日星期日，欢迎收看104期。"
    },
    "30s": {
-    "encode": 57.8,
-    "ctc": 12.2,
-    "inject": 3.6,
-    "generate": 307.7,
-    "align": 12.0,
-    "ctc_only": 70.0,
-    "n_gen": 137,
-    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静静介绍话题。"
+    "encode": 112.1,
+    "ctc": 15.1,
+    "inject": 3.7,
+    "generate": 308.6,
+    "align": 12.1,
+    "ctc_only": 127.2,
+    "n_gen": 138,
+    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静您介绍话题。"
    }
   }
  }
