@@ -99,8 +99,8 @@ def build_qwen():
     sys.path.insert(0, str(QWEN_ROOT))
     from qwen3_asr_ctc import create_asr_engine
     return create_asr_engine(
-        encoder_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.q4.onnx"),
-        ctc_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-CTC.q4.onnx"),
+        encoder_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-Encoder.fp16.onnx"),   # CUDA EP 上 fp16 比 q4 快一倍，q4 是给 DML 的
+        ctc_onnx_path=str(QWEN_ROOT / "model/Qwen3-ASR-CTC.fp16.onnx"),
         tokens_path=str(QWEN_ROOT / "model/tokens.txt"),
         preprocessor_path=str(QWEN_ROOT / "preprocessor"),
         decoder_gguf_path=str(QWEN_ROOT / "model/Qwen3-ASR-Decoder.q5_k_m.gguf"),
@@ -113,9 +113,9 @@ def build_glm():
     snaps = sorted(Path("/data/.cache/huggingface/hub/models--zai-org--GLM-ASR-Nano-2512/snapshots").glob("*"))
     return GLMASREngine(ASREngineConfig(
         model_id=str(snaps[-1]) if snaps else "",
-        encoder_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Encoder.q4.onnx"),
+        encoder_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Encoder.fp16.onnx"),
         projector_onnx_path=str(GLM_ROOT / "model/GLM-ASR-Projector.fp16.onnx"),
-        ctc_onnx_path=str(GLM_ROOT / "model/GLM-ASR-CTC-Final134k.q4.onnx"),
+        ctc_onnx_path=str(GLM_ROOT / "model/GLM-ASR-CTC-Final134k.fp16.onnx"),
         decoder_gguf_path=str(GLM_ROOT / "model/GLM-ASR-Nano-Decoder.q5_k_m.gguf"),
         tokens_path=str(GLM_ROOT / "model/tokens-phase2.txt"),
         onnx_provider="CUDA", llm_use_gpu=True, verbose=False, n_predict=256))
@@ -135,7 +135,7 @@ def main():
     # ggml-cuda.cu:103 abort；分进程还能保证每家测的时候 GPU 状态干净。
     prev = json.loads(Path(args.out).read_text()) if Path(args.out).exists() else {}
     result = {
-        "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
+        "gpu": "RTX 5070 Ti, warm median of 5, fp16 ONNX (CUDA EP, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA, same sm_120 build)",
         "engines": {"fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen", "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc", "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"},
         "wav": str(Path(args.wav).relative_to(ROOT)) if Path(args.wav).is_relative_to(ROOT) else args.wav,
         "definition": {"ctc_only_ms": "encode + ctc", "full_pipeline_ms": "whole decode_stream incl. align"},

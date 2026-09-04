@@ -1,5 +1,5 @@
 {
- "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
+ "gpu": "RTX 5070 Ti, warm median of 5, fp16 ONNX (CUDA EP, ArgMax in CTC graph) + q5 decoder (llama.cpp CUDA, same sm_120 build)",
  "engines": {
   "fun": "Fun-ASR-GGUF/fun_asr_gguf + model/*.fp16.onnx, same sm_120 llama.cpp build as glm/qwen",
   "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
@@ -16,12 +16,12 @@
    "30s": 32
   },
   "qwen": {
-   "5s": 28,
-   "30s": 46
+   "5s": 17,
+   "30s": 22
   },
   "glm": {
-   "5s": 42,
-   "30s": 172
+   "5s": 21,
+   "30s": 70
   }
  },
  "full_pipeline_ms": {
@@ -30,12 +30,12 @@
    "30s": 316
   },
   "qwen": {
-   "5s": 100,
-   "30s": 401
+   "5s": 93,
+   "30s": 379
   },
   "glm": {
-   "5s": 103,
-   "30s": 495
+   "5s": 82,
+   "30s": 394
   }
  },
  "breakdown_ms": {
@@ -63,46 +63,46 @@
   },
   "qwen": {
    "5s": {
-    "encode": 23.0,
-    "ctc": 5.0,
+    "encode": 11.4,
+    "ctc": 6.0,
     "inject": 3.2,
-    "generate": 67.9,
+    "generate": 70.7,
     "align": 0.3,
-    "ctc_only": 28.0,
-    "n_gen": 26,
-    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时》。"
+    "ctc_only": 17.4,
+    "n_gen": 27,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时事》。"
    },
    "30s": {
-    "encode": 26.7,
-    "ctc": 19.7,
-    "inject": 5.7,
-    "generate": 344.6,
+    "encode": 13.9,
+    "ctc": 8.4,
+    "inject": 4.9,
+    "generate": 347.4,
     "align": 2.5,
-    "ctc_only": 46.4,
+    "ctc_only": 22.3,
     "n_gen": 137,
-    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时间消息》，请静静介绍"
+    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零四期《世言消息》，请静静介绍话"
    }
   },
   "glm": {
    "5s": {
-    "encode": 31.0,
-    "ctc": 10.6,
-    "inject": 2.6,
-    "generate": 56.4,
-    "align": 1.9,
-    "ctc_only": 41.6,
+    "encode": 14.5,
+    "ctc": 6.2,
+    "inject": 2.5,
+    "generate": 56.6,
+    "align": 1.5,
+    "ctc_only": 20.7,
     "n_gen": 24,
     "text": "大家好，2026年1月11日星期日，欢迎收看104期。"
    },
    "30s": {
-    "encode": 112.2,
-    "ctc": 59.8,
-    "inject": 3.7,
-    "generate": 306.7,
-    "align": 11.8,
-    "ctc_only": 171.9,
-    "n_gen": 138,
-    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静您介绍话题。"
+    "encode": 57.8,
+    "ctc": 12.2,
+    "inject": 3.6,
+    "generate": 307.7,
+    "align": 12.0,
+    "ctc_only": 70.0,
+    "n_gen": 137,
+    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静静介绍话题。"
    }
   }
  }
