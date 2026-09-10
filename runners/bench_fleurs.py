@@ -49,6 +49,9 @@ def main():
     ap.add_argument("--cpu", dest="gpu", action="store_false")
     ap.add_argument("--fp32", action="store_true", help="use fp32 CTC (glm only)")
     ap.add_argument("--out", default="results/fleurs_results.json")
+    ap.add_argument("--dump-hyps", default=None,
+                    help="把逐句 ref/hyp 写到这个 json。默认只存聚合错误率，"
+                         "但日文的假名/汉字写法差异要靠逐句结果才能按读音归一化去量。")
     args = ap.parse_args()
     run(args)
 
@@ -97,8 +100,9 @@ def run(args):
         rows = rows[::step][:per_lang]
 
         stats = {name: [0, 0] for name in engine_names}
+        dumped = []
         t_lang = time.time()
-        for sample in rows:
+        for idx, sample in enumerate(rows):
             audio, sr = sf.read(io.BytesIO(sample["audio"]["bytes"]), dtype="float32")
             if audio.ndim > 1:
                 audio = audio.mean(axis=1)
@@ -108,6 +112,10 @@ def run(args):
                 err, total = error_rate(ref, hyp, cfg["metric"], lang)
                 stats[name][0] += err
                 stats[name][1] += total
+                if args.dump_hyps:
+                    if len(dumped) <= idx:
+                        dumped.append({"ref": ref})
+                    dumped[idx][name] = hyp
 
         entry = {"metric": cfg["metric"].upper(), "train_src": cfg["train_src"], "n": len(rows)}
         scores = {}
@@ -120,6 +128,13 @@ def run(args):
         winner = min(scores, key=scores.get)
         score_str = "  ".join(f"{n}={scores[n]:.1f}%" for n in engine_names)
         print(f"[{lang}] {cfg['metric'].upper()}  {score_str}  ({len(rows)} samples, {time.time()-t_lang:.0f}s) -> {winner}")
+
+        if args.dump_hyps:
+            dp = Path(args.dump_hyps)
+            dp.parent.mkdir(parents=True, exist_ok=True)
+            alld = json.loads(dp.read_text()) if dp.exists() else {}
+            alld[lang] = dumped
+            dp.write_text(json.dumps(alld, ensure_ascii=False, indent=1))
 
         out_path = Path(args.out)
         out_path.parent.mkdir(parents=True, exist_ok=True)
