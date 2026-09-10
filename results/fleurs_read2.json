@@ -1,0 +1,240 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "full",
+    "engines": {
+      "qwen_ja": "fun-asr-nano-int4",
+      "qwen_ja_read": "fun-asr-nano-int4",
+      "qwen_ja_read2": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.29.0",
+    "providers": {
+      "qwen_ja": "CUDAExecutionProvider",
+      "qwen_ja_read": "CUDAExecutionProvider",
+      "qwen_ja_read2": "CUDAExecutionProvider"
+    },
+    "timestamp": "2026-09-09 18:57:14"
+  },
+  "results": {
+    "en_us": {
+      "metric": "WER",
+      "train_src": "librispeech+gigaspeech",
+      "n": 647,
+      "qwen_ja_er": 18.7,
+      "qwen_ja_err/total": [
+        2659,
+        14202
+      ],
+      "qwen_ja_read_er": 18.8,
+      "qwen_ja_read_err/total": [
+        2676,
+        14202
+      ],
+      "qwen_ja_read2_er": 19.1,
+      "qwen_ja_read2_err/total": [
+        2719,
+        14202
+      ]
+    },
+    "cmn_hans_cn": {
+      "metric": "CER",
+      "train_src": "aishell1+wenetspeech+magicdata",
+      "n": 945,
+      "qwen_ja_er": 11.0,
+      "qwen_ja_err/total": [
+        3628,
+        33059
+      ],
+      "qwen_ja_read_er": 10.8,
+      "qwen_ja_read_err/total": [
+        3560,
+        33059
+      ],
+      "qwen_ja_read2_er": 10.9,
+      "qwen_ja_read2_err/total": [
+        3603,
+        33059
+      ]
+    },
+    "ko_kr": {
+      "metric": "CER",
+      "train_src": "ksponspeech",
+      "n": 382,
+      "qwen_ja_er": 21.1,
+      "qwen_ja_err/total": [
+        3556,
+        16849
+      ],
+      "qwen_ja_read_er": 21.0,
+      "qwen_ja_read_err/total": [
+        3534,
+        16849
+      ],
+      "qwen_ja_read2_er": 21.1,
+      "qwen_ja_read2_err/total": [
+        3555,
+        16849
+      ]
+    },
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 650,
+      "qwen_ja_er": 24.7,
+      "qwen_ja_err/total": [
+        7811,
+        31584
+      ],
+      "qwen_ja_read_er": 23.6,
+      "qwen_ja_read_err/total": [
+        7458,
+        31584
+      ],
+      "qwen_ja_read2_er": 22.3,
+      "qwen_ja_read2_err/total": [
+        7057,
+        31584
+      ]
+    },
+    "yue_hant_hk": {
+      "metric": "CER",
+      "train_src": "cv_yue",
+      "n": 819,
+      "qwen_ja_er": 29.3,
+      "qwen_ja_err/total": [
+        8113,
+        27714
+      ],
+      "qwen_ja_read_er": 29.7,
+      "qwen_ja_read_err/total": [
+        8238,
+        27714
+      ],
+      "qwen_ja_read2_er": 31.1,
+      "qwen_ja_read2_err/total": [
+        8631,
+        27714
+      ]
+    },
+    "de_de": {
+      "metric": "WER",
+      "train_src": "mls_german",
+      "n": 862,
+      "qwen_ja_er": 41.6,
+      "qwen_ja_err/total": [
+        7613,
+        18303
+      ],
+      "qwen_ja_read_er": 41.4,
+      "qwen_ja_read_err/total": [
+        7583,
+        18303
+      ],
+      "qwen_ja_read2_er": 41.7,
+      "qwen_ja_read2_err/total": [
+        7629,
+        18303
+      ]
+    },
+    "fr_fr": {
+      "metric": "WER",
+      "train_src": "mls_french",
+      "n": 676,
+      "qwen_ja_er": 46.1,
+      "qwen_ja_err/total": [
+        7711,
+        16731
+      ],
+      "qwen_ja_read_er": 46.0,
+      "qwen_ja_read_err/total": [
+        7693,
+        16731
+      ],
+      "qwen_ja_read2_er": 46.1,
+      "qwen_ja_read2_err/total": [
+        7717,
+        16731
+      ]
+    },
+    "es_419": {
+      "metric": "WER",
+      "train_src": "mls_spanish",
+      "n": 908,
+      "qwen_ja_er": 35.2,
+      "qwen_ja_err/total": [
+        8101,
+        23045
+      ],
+      "qwen_ja_read_er": 34.7,
+      "qwen_ja_read_err/total": [
+        8008,
+        23045
+      ],
+      "qwen_ja_read2_er": 35.5,
+      "qwen_ja_read2_err/total": [
+        8190,
+        23045
+      ]
+    },
+    "it_it": {
+      "metric": "WER",
+      "train_src": "mls_italian",
+      "n": 865,
+      "qwen_ja_er": 50.8,
+      "qwen_ja_err/total": [
+        10351,
+        20390
+      ],
+      "qwen_ja_read_er": 50.9,
+      "qwen_ja_read_err/total": [
+        10380,
+        20390
+      ],
+      "qwen_ja_read2_er": 51.1,
+      "qwen_ja_read2_err/total": [
+        10414,
+        20390
+      ]
+    },
+    "nl_nl": {
+      "metric": "WER",
+      "train_src": "mls_dutch",
+      "n": 364,
+      "qwen_ja_er": 51.4,
+      "qwen_ja_err/total": [
+        4216,
+        8201
+      ],
+      "qwen_ja_read_er": 51.6,
+      "qwen_ja_read_err/total": [
+        4232,
+        8201
+      ],
+      "qwen_ja_read2_er": 53.4,
+      "qwen_ja_read2_err/total": [
+        4380,
+        8201
+      ]
+    },
+    "pl_pl": {
+      "metric": "WER",
+      "train_src": "mls_polish",
+      "n": 758,
+      "qwen_ja_er": 76.8,
+      "qwen_ja_err/total": [
+        10869,
+        14146
+      ],
+      "qwen_ja_read_er": 77.5,
+      "qwen_ja_read_err/total": [
+        10965,
+        14146
+      ],
+      "qwen_ja_read2_er": 79.3,
+      "qwen_ja_read2_err/total": [
+        11215,
+        14146
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "full",
+    "engines": {
+      "fun": "fun-asr-nano-int4",
+      "qwen_ja": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.27.0",
+    "providers": {
+      "fun": "CUDAExecutionProvider",
+      "qwen_ja": "CUDAExecutionProvider"
+    },
+    "timestamp": "2026-09-08 15:55:36"
+  },
+  "results": {
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 650,
+      "fun_er": 17.0,
+      "fun_err/total": [
+        5362,
+        31584
+      ],
+      "qwen_ja_er": 24.7,
+      "qwen_ja_err/total": [
+        7810,
+        31584
+      ]
+    }
+  }
+}

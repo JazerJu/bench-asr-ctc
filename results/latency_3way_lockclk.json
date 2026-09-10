@@ -1,0 +1,109 @@
+{
+ "gpu": "RTX 5070 Ti, warm median of 5, int4 ONNX (CUDA EP) + q5 decoder (llama.cpp CUDA)",
+ "engines": {
+  "fun": "CapsWriter util/fun_asr_gguf + models/Fun-ASR-Nano-GGUF",
+  "qwen": "Qwen3-ASR-CTC-GGUF/qwen3_asr_ctc",
+  "glm": "GLM-ASR-CTC-GGUF/glm_asr_ctc"
+ },
+ "wav": "cases/zh_news_30s.wav",
+ "definition": {
+  "ctc_only_ms": "encode + ctc",
+  "full_pipeline_ms": "whole decode_stream incl. align"
+ },
+ "ctc_only_ms": {
+  "fun": {
+   "5s": 22,
+   "30s": 42
+  },
+  "qwen": {
+   "5s": 28,
+   "30s": 46
+  },
+  "glm": {
+   "5s": 42,
+   "30s": 173
+  }
+ },
+ "full_pipeline_ms": {
+  "fun": {
+   "5s": 89,
+   "30s": 348
+  },
+  "qwen": {
+   "5s": 101,
+   "30s": 400
+  },
+  "glm": {
+   "5s": 103,
+   "30s": 499
+  }
+ },
+ "breakdown_ms": {
+  "fun": {
+   "5s": {
+    "encode": 14.6,
+    "ctc": 6.9,
+    "inject": 3.4,
+    "generate": 59.9,
+    "align": 1.6,
+    "ctc_only": 21.5,
+    "n_gen": 28,
+    "text": "大家好，2026年1月11日星期日，欢迎收看10000次起事件。"
+   },
+   "30s": {
+    "encode": 32.6,
+    "ctc": 9.3,
+    "inject": 3.7,
+    "generate": 266.4,
+    "align": 33.5,
+    "ctc_only": 41.9,
+    "n_gen": 136,
+    "text": "大家好，二零二六年一月十一日星期日，欢迎收看一千零次起事研消息。请静静介绍话题。"
+   }
+  },
+  "qwen": {
+   "5s": {
+    "encode": 23.3,
+    "ctc": 5.0,
+    "inject": 3.2,
+    "generate": 68.2,
+    "align": 0.3,
+    "ctc_only": 28.3,
+    "n_gen": 26,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时》。"
+   },
+   "30s": {
+    "encode": 25.7,
+    "ctc": 19.8,
+    "inject": 5.0,
+    "generate": 345.5,
+    "align": 2.6,
+    "ctc_only": 45.5,
+    "n_gen": 137,
+    "text": "大家好，二零二六年一月十一日，星期日，欢迎收看一千零四期《时间消息》，请静静介绍"
+   }
+  },
+  "glm": {
+   "5s": {
+    "encode": 30.7,
+    "ctc": 10.8,
+    "inject": 2.6,
+    "generate": 56.3,
+    "align": 1.8,
+    "ctc_only": 41.5,
+    "n_gen": 24,
+    "text": "大家好，2026年1月11日星期日，欢迎收看104期。"
+   },
+   "30s": {
+    "encode": 113.1,
+    "ctc": 60.2,
+    "inject": 3.6,
+    "generate": 309.5,
+    "align": 12.5,
+    "ctc_only": 173.3,
+    "n_gen": 138,
+    "text": "大家好，2026年1月11日星期日，欢迎收看1004期事件消息，请静您介绍话题。"
+   }
+  }
+ }
+}

@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "full",
+    "engines": {
+      "qwen_full": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.23.2",
+    "providers": {
+      "qwen_full": "?"
+    },
+    "timestamp": "2026-09-09 19:26:00"
+  },
+  "results": {
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 650,
+      "qwen_full_er": 5.3,
+      "qwen_full_err/total": [
+        1689,
+        31584
+      ]
+    }
+  }
+}

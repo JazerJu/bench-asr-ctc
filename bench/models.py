@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import pathlib
 import numpy as np
 import onnxruntime as ort
 
@@ -381,12 +382,172 @@ class QwenR2Fp16Engine(QwenR2Engine):
         self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
 
 
+
+class QwenJaEngine(QwenEngine):
+    """v1-ja-enhance：同一冻结编码器 + 日语增强重训的 v1 头（ffn_hidden=128，step 89463）。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-ja"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag       # 编码器只有 q4/fp16 两份，沿用旧头的那份
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenJaReadEngine(QwenEngine):
+    """v1-ja-read：在 v1-ja 之上再接续一轮，掺入 258 h 日语朗读语域数据
+    （CV other 有票 74.6h + JSUT 6.78h + TTS 合成 47.72h，各 x2 上采样）。
+    ffn_hidden 仍是 128，step 127483，val_loss 0.533034（v1-ja 是 0.642611）。
+    编码器与 v1-ja 共用同一份冻结权重，只换 CTC 头。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-ja-read"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenJaRead2Engine(QwenEngine):
+    """v1-ja-read2：在 v1-ja-read 之上再接续一轮，掺入 reazonspeech all.wer_10.0
+    的 split_2（817,716 条 / 1,030.5 h，已按 (文本,毫秒时长) 扣掉与 large.wer_10.0
+    的重复），朗读语料上采样从 x2 提到 x3。日语总量 1,898.9 -> 3,058.5 h。
+    step 176,491。编码器与前几轮共用同一份冻结权重，只换 CTC 头。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-ja-read2"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenJaScEngine(QwenEngine):
+    """v1-ja-sc：数据与 v1-ja-read2 完全相同，只换训练方法。
+
+    Self-conditioned CTC（arXiv 2104.02724，--self-cond + --inter-ctc-weight 0.3）
+    + 2 个 epoch + SpecAugment。step 260,503，val_loss 0.5171（read2 是 0.5455，
+    同一份 val 集，可比）。
+
+    注意这一轮的推理图**和前几轮不一样**：conditioning_layer 参与前向，
+    ctc_lo 被用 3 次。int4 因此从 25.1 MB 涨到 44.0 MB。编码器仍与前几轮
+    共用同一份冻结权重。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-ja-sc"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenFullEngine:
+    """完整的 Qwen3-ASR-1.7B：同一个编码器 + 它自己的 LLM 解码器（不是我们的 CTC 头）。
+
+    这是个诊断用的引擎，用来回答一个问题：我们的日语 CER 卡在 22-23% 到底是
+    「冻结编码器的表示能力到顶了」还是「CTC 头没把编码器里的信息提取出来」。
+      - 完整模型明显更好 -> 信息在编码器里，问题在头/训练
+      - 完整模型也差不多 -> 编码器就是天花板，加数据没用
+
+    走 transformers 的 generate，比 ONNX 那几个慢得多，只适合诊断不适合铺量。
+    接口对齐 QwenEngine：encode 透传原始波形，decode_text 里做真正的生成。
+    """
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        import os
+        import sys
+        import torch
+
+        src = os.environ.get("QWEN_ASR_SRC", "/data/其他模型/ASR模型/Qwen3-ASR")
+        if os.path.isdir(src) and src not in sys.path:
+            sys.path.insert(0, src)
+        # compat 必须先于 qwen_asr 导入（init-order 补丁）
+        sys.path.insert(0, str(pathlib.Path("/data/推理框架/asr-onnx/Qwen3-ASR-CTC-GGUF")))
+        from qwen3_asr_ctc import compat  # noqa: F401
+
+        from qwen_asr import Qwen3ASRModel
+
+        d = os.environ.get("QWEN3_ASR_DIR", "/data/推理框架/asr-onnx/Qwen3-ASR-HF")
+        # Qwen3ASRModel 是高层封装，不是 nn.Module —— 没有 .to()/.eval()，
+        # 设备和 dtype 由 from_pretrained 自己管（转发给 AutoModel）。
+        self.model = Qwen3ASRModel.from_pretrained(
+            d,
+            torch_dtype=torch.bfloat16 if (use_gpu and torch.cuda.is_available()) else torch.float32,
+            device_map="cuda" if (use_gpu and torch.cuda.is_available()) else "cpu",
+            max_inference_batch_size=1,
+        )
+        # 语种要写全名（"Japanese"），不是 ISO 码 —— validate_language 只认
+        # SUPPORTED_LANGUAGES 里那 30 个英文名，传 "ja" 会 ValueError。
+        self.lang = os.environ.get("QWEN_FULL_LANG", "Japanese")
+        self.torch = torch
+
+    def encode(self, audio):
+        return audio            # 透传，真正的活在 decode_text 里
+
+    def decode_text(self, audio) -> str:
+        with self.torch.inference_mode():
+            res = self.model.transcribe([(audio, 16000)], language=self.lang)
+        if not res:
+            return ""
+        r = res[0]
+        return (getattr(r, "text", None) or str(r) or "").strip()
+
+
 ENGINES = {
     "glm": GLMEngine,
     "fun": FunEngine,
     "qwen": QwenEngine,
     "qwen_r2": QwenR2Engine,
     "qwen_r2_fp16": QwenR2Fp16Engine,
+    "qwen_ja": QwenJaEngine,
+    "qwen_ja_read": QwenJaReadEngine,
+    "qwen_ja_read2": QwenJaRead2Engine,
+    "qwen_ja_sc": QwenJaScEngine,
+    "qwen_full": QwenFullEngine,
 }
 
 
