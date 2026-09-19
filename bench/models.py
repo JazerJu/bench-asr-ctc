@@ -485,6 +485,38 @@ class QwenJaScEngine(QwenEngine):
         self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
 
 
+class QwenJaNoScEngine(QwenEngine):
+    """v1-ja-nosc：Self-conditioned CTC 的消融对照。
+
+    与 qwen_ja_sc 逐项相同（同一基座 read2 best.pt @176,491、同样 7 张卡 /
+    batch 224、同一条 LR 曲线、2 个 epoch、InterCTC 0.3、SpecAugment、同一批
+    manifest），**唯一差别是不开 --self-cond**。
+
+    step 260,503，val_loss 0.5388（sc 是 0.5171，基座 read2 是 0.5455）。
+    48.3M 参数、int4 25.1 MB —— 和 read2 同规格，sc 是 85.4M / 44.0 MB。
+
+    注意：这一轮中途因为 device 2 被算子 profiling 占用而崩过一次，从
+    step_224000.pt 续跑，比 sc 多做 250 步（+0.30%）且 epoch 2 的数据顺序重排。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-ja-nosc"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
 class QwenFullEngine:
     """完整的 Qwen3-ASR-1.7B：同一个编码器 + 它自己的 LLM 解码器（不是我们的 CTC 头）。
 
@@ -537,6 +569,76 @@ class QwenFullEngine:
         return (getattr(r, "text", None) or str(r) or "").strip()
 
 
+
+class QwenAiinfraEngine(QwenEngine):
+    """aiinfra：在 v1-ja-sc 之上再续训一轮 AI-infra 中英混读语料（372 h / 545 个视频）。
+
+    架构与 v1-ja-sc 相同（self-conditioned CTC，conditioning_layer 参与前向，
+    int4 因此是 44 MB 而不是 25 MB）。step 338,805，epoch 2，val_loss 0.5598
+    ——这个数与 sc 的 0.5171 **不可比**，验证集换成了 aiinfra_val。
+    编码器仍与历轮共用同一份冻结权重。"""
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / "qwen-ctc-aiinfra"
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenAiinfra2Engine(QwenEngine):
+    """aiinfra2：v1-ja-sc 之上续训，数据换成 v12 硬字幕重提 + TTS 合成（cann / ascend / 昇腾 / sglang）。
+
+    LR 曲线、epoch、batch 与 aiinfra 相同。step 338,897，val_loss 0.5529（验证集随机切分，
+    与 sc、aiinfra 不可比）。标签里汉字前的空格没清掉，输出有半个汉字（U+FFFD），aiinfra3 修的就是这个。"""
+
+    CTC_SUBDIR = "qwen-ctc-aiinfra2"
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        d_ctc = MODELS_DIR / self.CTC_SUBDIR
+        tag = _precision_tag(quantized)
+        enc_tag = "q4" if tag == "fp16" else tag
+        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
+        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        self.id2bytes = {}
+        import base64
+        for line in open(d_enc / "tokens.txt", encoding="utf-8"):
+            line = line.rstrip("\n")
+            if not line:
+                continue
+            b64, idx = line.rsplit("\t", 1)
+            self.id2bytes[int(idx)] = base64.b64decode(b64)
+        from transformers import WhisperFeatureExtractor
+        self.fe = WhisperFeatureExtractor.from_pretrained(str(d_enc))
+
+
+class QwenAiinfra3Engine(QwenAiinfra2Engine):
+    """aiinfra3：与 aiinfra2 同基座、同 LR 曲线，只改标签——汉字前不留空格（规则 C）、
+    词表外 token 拆成表内 token 不再丢段、韩语等「空格+半截字节」token 拆成独立空格。"""
+
+    CTC_SUBDIR = "qwen-ctc-aiinfra3"
+
+
+class QwenAiinfra4Engine(QwenAiinfra2Engine):
+    """aiinfra4（收尾轮）：同基座、同 LR 曲线。相对 aiinfra3 多三件事——中文相邻字幕合并成
+    8-20 秒的长段 x2（修中文长输入退化）、日语全角转半角（少切半截字节 token）、清掉超长字幕
+    与标签超帧的坏段。step 339,707。"""
+
+    CTC_SUBDIR = "qwen-ctc-aiinfra4"
+
+
 ENGINES = {
     "glm": GLMEngine,
     "fun": FunEngine,
@@ -547,7 +649,12 @@ ENGINES = {
     "qwen_ja_read": QwenJaReadEngine,
     "qwen_ja_read2": QwenJaRead2Engine,
     "qwen_ja_sc": QwenJaScEngine,
+    "qwen_ja_nosc": QwenJaNoScEngine,
     "qwen_full": QwenFullEngine,
+    "qwen_aiinfra": QwenAiinfraEngine,
+    "qwen_aiinfra2": QwenAiinfra2Engine,
+    "qwen_aiinfra3": QwenAiinfra3Engine,
+    "qwen_aiinfra4": QwenAiinfra4Engine,
 }
 
 

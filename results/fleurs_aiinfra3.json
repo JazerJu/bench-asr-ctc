@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "dataset": "google/fleurs official test split",
+    "per_lang": "full",
+    "engines": {
+      "qwen_ja_sc": "fun-asr-nano-int4",
+      "qwen_aiinfra": "fun-asr-nano-int4",
+      "qwen_aiinfra2": "fun-asr-nano-int4",
+      "qwen_aiinfra3": "fun-asr-nano-int4"
+    },
+    "onnxruntime": "1.29.0",
+    "providers": {
+      "qwen_ja_sc": "CUDAExecutionProvider",
+      "qwen_aiinfra": "CUDAExecutionProvider",
+      "qwen_aiinfra2": "CUDAExecutionProvider",
+      "qwen_aiinfra3": "CUDAExecutionProvider"
+    },
+    "timestamp": "2026-09-18 10:40:45"
+  },
+  "results": {
+    "en_us": {
+      "metric": "WER",
+      "train_src": "librispeech+gigaspeech",
+      "n": 647,
+      "qwen_ja_sc_er": 17.9,
+      "qwen_ja_sc_err/total": [
+        2541,
+        14202
+      ],
+      "qwen_aiinfra_er": 17.0,
+      "qwen_aiinfra_err/total": [
+        2421,
+        14202
+      ],
+      "qwen_aiinfra2_er": 17.0,
+      "qwen_aiinfra2_err/total": [
+        2412,
+        14202
+      ],
+      "qwen_aiinfra3_er": 16.9,
+      "qwen_aiinfra3_err/total": [
+        2403,
+        14202
+      ]
+    },
+    "cmn_hans_cn": {
+      "metric": "CER",
+      "train_src": "aishell1+wenetspeech+magicdata",
+      "n": 945,
+      "qwen_ja_sc_er": 10.8,
+      "qwen_ja_sc_err/total": [
+        3567,
+        33059
+      ],
+      "qwen_aiinfra_er": 10.4,
+      "qwen_aiinfra_err/total": [
+        3448,
+        33059
+      ],
+      "qwen_aiinfra2_er": 10.2,
+      "qwen_aiinfra2_err/total": [
+        3357,
+        33059
+      ],
+      "qwen_aiinfra3_er": 10.1,
+      "qwen_aiinfra3_err/total": [
+        3353,
+        33059
+      ]
+    },
+    "ko_kr": {
+      "metric": "CER",
+      "train_src": "ksponspeech",
+      "n": 382,
+      "qwen_ja_sc_er": 18.9,
+      "qwen_ja_sc_err/total": [
+        3185,
+        16849
+      ],
+      "qwen_aiinfra_er": 18.3,
+      "qwen_aiinfra_err/total": [
+        3076,
+        16849
+      ],
+      "qwen_aiinfra2_er": 18.1,
+      "qwen_aiinfra2_err/total": [
+        3057,
+        16849
+      ],
+      "qwen_aiinfra3_er": 15.9,
+      "qwen_aiinfra3_err/total": [
+        2679,
+        16849
+      ]
+    },
+    "ja_jp": {
+      "metric": "CER",
+      "train_src": "cv_ja",
+      "n": 650,
+      "qwen_ja_sc_er": 19.2,
+      "qwen_ja_sc_err/total": [
+        6072,
+        31584
+      ],
+      "qwen_aiinfra_er": 18.4,
+      "qwen_aiinfra_err/total": [
+        5807,
+        31584
+      ],
+      "qwen_aiinfra2_er": 18.3,
+      "qwen_aiinfra2_err/total": [
+        5778,
+        31584
+      ],
+      "qwen_aiinfra3_er": 18.4,
+      "qwen_aiinfra3_err/total": [
+        5797,
+        31584
+      ]
+    },
+    "yue_hant_hk": {
+      "metric": "CER",
+      "train_src": "cv_yue",
+      "n": 819,
+      "qwen_ja_sc_er": 26.1,
+      "qwen_ja_sc_err/total": [
+        7240,
+        27714
+      ],
+      "qwen_aiinfra_er": 25.4,
+      "qwen_aiinfra_err/total": [
+        7027,
+        27714
+      ],
+      "qwen_aiinfra2_er": 26.0,
+      "qwen_aiinfra2_err/total": [
+        7210,
+        27714
+      ],
+      "qwen_aiinfra3_er": 25.9,
+      "qwen_aiinfra3_err/total": [
+        7185,
+        27714
+      ]
+    },
+    "de_de": {
+      "metric": "WER",
+      "train_src": "mls_german",
+      "n": 862,
+      "qwen_ja_sc_er": 38.5,
+      "qwen_ja_sc_err/total": [
+        7048,
+        18303
+      ],
+      "qwen_aiinfra_er": 37.0,
+      "qwen_aiinfra_err/total": [
+        6772,
+        18303
+      ],
+      "qwen_aiinfra2_er": 37.5,
+      "qwen_aiinfra2_err/total": [
+        6859,
+        18303
+      ],
+      "qwen_aiinfra3_er": 37.3,
+      "qwen_aiinfra3_err/total": [
+        6824,
+        18303
+      ]
+    },
+    "fr_fr": {
+      "metric": "WER",
+      "train_src": "mls_french",
+      "n": 676,
+      "qwen_ja_sc_er": 43.4,
+      "qwen_ja_sc_err/total": [
+        7269,
+        16731
+      ],
+      "qwen_aiinfra_er": 42.7,
+      "qwen_aiinfra_err/total": [
+        7150,
+        16731
+      ],
+      "qwen_aiinfra2_er": 43.3,
+      "qwen_aiinfra2_err/total": [
+        7247,
+        16731
+      ],
+      "qwen_aiinfra3_er": 42.5,
+      "qwen_aiinfra3_err/total": [
+        7103,
+        16731
+      ]
+    },
+    "es_419": {
+      "metric": "WER",
+      "train_src": "mls_spanish",
+      "n": 908,
+      "qwen_ja_sc_er": 31.5,
+      "qwen_ja_sc_err/total": [
+        7248,
+        23045
+      ],
+      "qwen_aiinfra_er": 31.1,
+      "qwen_aiinfra_err/total": [
+        7177,
+        23045
+      ],
+      "qwen_aiinfra2_er": 31.5,
+      "qwen_aiinfra2_err/total": [
+        7264,
+        23045
+      ],
+      "qwen_aiinfra3_er": 30.6,
+      "qwen_aiinfra3_err/total": [
+        7052,
+        23045
+      ]
+    },
+    "it_it": {
+      "metric": "WER",
+      "train_src": "mls_italian",
+      "n": 865,
+      "qwen_ja_sc_er": 46.2,
+      "qwen_ja_sc_err/total": [
+        9428,
+        20390
+      ],
+      "qwen_aiinfra_er": 44.9,
+      "qwen_aiinfra_err/total": [
+        9154,
+        20390
+      ],
+      "qwen_aiinfra2_er": 45.3,
+      "qwen_aiinfra2_err/total": [
+        9239,
+        20390
+      ],
+      "qwen_aiinfra3_er": 44.4,
+      "qwen_aiinfra3_err/total": [
+        9063,
+        20390
+      ]
+    },
+    "nl_nl": {
+      "metric": "WER",
+      "train_src": "mls_dutch",
+      "n": 364,
+      "qwen_ja_sc_er": 48.1,
+      "qwen_ja_sc_err/total": [
+        3947,
+        8201
+      ],
+      "qwen_aiinfra_er": 47.5,
+      "qwen_aiinfra_err/total": [
+        3893,
+        8201
+      ],
+      "qwen_aiinfra2_er": 47.7,
+      "qwen_aiinfra2_err/total": [
+        3913,
+        8201
+      ],
+      "qwen_aiinfra3_er": 47.8,
+      "qwen_aiinfra3_err/total": [
+        3916,
+        8201
+      ]
+    },
+    "pl_pl": {
+      "metric": "WER",
+      "train_src": "mls_polish",
+      "n": 758,
+      "qwen_ja_sc_er": 74.9,
+      "qwen_ja_sc_err/total": [
+        10592,
+        14146
+      ],
+      "qwen_aiinfra_er": 73.5,
+      "qwen_aiinfra_err/total": [
+        10398,
+        14146
+      ],
+      "qwen_aiinfra2_er": 74.4,
+      "qwen_aiinfra2_err/total": [
+        10524,
+        14146
+      ],
+      "qwen_aiinfra3_er": 73.9,
+      "qwen_aiinfra3_err/total": [
+        10450,
+        14146
+      ]
+    }
+  }
+}
