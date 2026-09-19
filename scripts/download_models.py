@@ -20,6 +20,8 @@ ROOT = Path(__file__).resolve().parent.parent
 GLM_DIR = ROOT / "models" / "glm-ctc"
 FUN_DIR = ROOT / "models" / "fun-asr"
 QWEN_DIR = ROOT / "models" / "qwen-ctc"
+# 续训轮只换 CTC 头，编码器和 tokens.txt 还用 qwen-ctc/ 下那份
+AIINFRA4_DIR = ROOT / "models" / "qwen-ctc-aiinfra4"
 
 HF_REPO = os.environ.get("BENCH_MODEL_REPO", "JazerJu/glm-asr-ctc-bench")
 
@@ -46,6 +48,14 @@ QWEN_FILES = [
     "qwen-ctc/Qwen3-ASR-CTC.q4.onnx",
     "qwen-ctc/tokens.txt",
     "qwen-ctc/preprocessor_config.json",
+]
+
+# aiinfra4 收尾轮的 CTC 头。q4f16 是 CapsWriter-Offline 在用的那份。
+# fp16 只在 FETCH_FP16 时拉（171 MB）。
+AIINFRA4_FILES = [
+    "qwen-ctc-aiinfra4/Qwen3-ASR-CTC.q4.onnx",
+    "qwen-ctc-aiinfra4/Qwen3-ASR-CTC.q4f16.onnx",
+    "qwen-ctc-aiinfra4/config.json",
 ]
 
 FP16_FILES = [
@@ -106,6 +116,22 @@ def fetch_qwen():
         print(f"qwen: {dst.name} fetched from {HF_REPO}")
 
 
+def fetch_aiinfra4():
+    """qwen_aiinfra4 引擎要的 CTC 头。编码器共用 qwen-ctc/，所以先跑 fetch_qwen()。"""
+    AIINFRA4_DIR.mkdir(parents=True, exist_ok=True)
+    names = list(AIINFRA4_FILES)
+    if os.environ.get("FETCH_FP16"):
+        names.append("qwen-ctc-aiinfra4/Qwen3-ASR-CTC.fp16.onnx")
+    for name in names:
+        dst = AIINFRA4_DIR / Path(name).name
+        if dst.exists():
+            print(f"aiinfra4: {dst.name} already present")
+            continue
+        p = hf_hub_download(HF_REPO, name, repo_type="model")
+        shutil.copyfile(p, dst)
+        print(f"aiinfra4: {dst.name} fetched from {HF_REPO}")
+
+
 def fetch_fp16():
     GLM_DIR.mkdir(parents=True, exist_ok=True)
     QWEN_DIR.mkdir(parents=True, exist_ok=True)
@@ -127,10 +153,14 @@ if __name__ == "__main__":
         fetch()
         link_fun()
         fetch_qwen()
+        fetch_aiinfra4()
         if os.environ.get("FETCH_FP16"):
             fetch_fp16()
     elif cmd == "fetch-fp16":
         fetch_fp16()
+    elif cmd == "aiinfra4":
+        fetch_qwen()
+        fetch_aiinfra4()
     elif cmd == "fun":
         link_fun()
     else:
