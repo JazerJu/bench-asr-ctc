@@ -639,6 +639,14 @@ class QwenAiinfra4Engine(QwenAiinfra2Engine):
     CTC_SUBDIR = "qwen-ctc-aiinfra4"
 
 
+class QwenAiinfra5Engine(QwenAiinfra2Engine):
+    """aiinfra5：修 aiinfra4 在部分英文上 CTC 丢词（SRT 错位）。同基座、同 LR 曲线，相对 aiinfra4
+    只改两处：中文长段 x2 -> x1，加 TED-LIUM 3 train x1（453.6 h，已剔除评测用的 ReshmaSaujani_2016）。
+    3 卡 x 43 x 累积 2 = 258（0-3 号卡被占、5 号卡坏），step 340,763，val_loss 0.5300。"""
+
+    CTC_SUBDIR = "qwen-ctc-aiinfra5"
+
+
 ENGINES = {
     "glm": GLMEngine,
     "fun": FunEngine,
@@ -655,6 +663,7 @@ ENGINES = {
     "qwen_aiinfra2": QwenAiinfra2Engine,
     "qwen_aiinfra3": QwenAiinfra3Engine,
     "qwen_aiinfra4": QwenAiinfra4Engine,
+    "qwen_aiinfra5": QwenAiinfra5Engine,
 }
 
 

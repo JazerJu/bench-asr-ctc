@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""英文回归集：一个 CTC 头在 6 条英文音频上的丢词、CER 和 SRT 时间戳偏移。
+"""CTC 头回归集：一个 CTC 头在固定一组长音频上的丢词、CER 和 SRT 时间戳偏移。
+
+  --case en_regression   英文 6 条（默认）
+  --case zh_regression   中文 8 条，各截 10 分钟；CapsWriter 转写文件时按 30 秒切段，
+                         aiinfra5 在中文 10-30 秒窗口上会丢字，用这组确认是否普遍
+
 
 aiinfra4 在部分英文音频上 CTC 首遍丢词，NW 对齐缺锚点，SRT 时间戳成段偏移。
 FLEURS / LibriSpeech 都是朗读短句，抓不到这个问题，所以单独固定这一组。
@@ -31,12 +36,12 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-CASE = ROOT / "cases" / "en_regression"
 VIDEO_DIR = Path("/media/jju/ExtraDisk/VidGo/backend/media/saved_video")
 
 
-def to_chars(s: str) -> str:
-    return re.sub(r"[^a-z0-9]", "", s.lower())
+def to_chars(s: str, keep_cjk: bool = False) -> str:
+    # 英文只数 a-z0-9（与已有基线口径一致）；中文另外保留汉字
+    return re.sub(r"[^a-z0-9\u3400-\u9fff]" if keep_cjk else r"[^a-z0-9]", "", s.lower())
 
 
 def edit_distance(a, b) -> int:
@@ -71,11 +76,16 @@ def cues(words, max_sec=12.0, max_chars=90):
     return out
 
 
-def ensure_wav(key: str, vhash: str) -> Path:
-    wav = CASE / "audio" / f"{key}.wav"
+def ensure_wav(case: Path, c: dict) -> Path:
+    wav = case / "audio" / f"{c['key']}.wav"
     if not wav.exists():
         wav.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(VIDEO_DIR / f"{vhash}.mp4"),
+        cut = []
+        if c.get("start"):
+            cut += ["-ss", c["start"]]
+        if c.get("dur"):
+            cut += ["-t", c["dur"]]
+        subprocess.run(["ffmpeg", "-v", "error", "-y", *cut, "-i", str(VIDEO_DIR / f"{c['vidgo_hash']}.mp4"),
                         "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(wav)], check=True)
     return wav
 
@@ -104,10 +114,27 @@ def main():
     ap.add_argument("--capswriter", type=Path,
                     default=Path(os.environ.get("CAPSWRITER_ROOT", "/data/AI应用/流式转录/CapsWriter-Offline")))
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--case", default="en_regression")
+    ap.add_argument("--make-refs", action="store_true",
+                    help="用这个头的完整流水线输出生成 refs/（只在建新回归集时用一次，通常用 v1 头）")
     a = ap.parse_args()
 
+    CASE = ROOT / "cases" / a.case
     clips = list(csv.DictReader(open(CASE / "clips.tsv", encoding="utf-8"), delimiter="\t"))
-    wavs = {c["key"]: ensure_wav(c["key"], c["vidgo_hash"]) for c in clips}
+    wavs = {c["key"]: ensure_wav(CASE, c) for c in clips}
+    cjk = {c["key"]: c.get("lang", "en") == "zh" for c in clips}
+
+    if a.make_refs:
+        eng = make_engine(a.capswriter, a.head, with_decoder=True)
+        (CASE / "refs").mkdir(exist_ok=True)
+        for c in clips:
+            r = eng.transcribe(str(wavs[c["key"]]))
+            json.dump({"head": str(a.head), "final_text": r.text, "ctc_text": r.ctc_text,
+                       "words": [list(w) for w in r.words]},
+                      open(CASE / "refs" / f"{c['key']}.json", "w", encoding="utf-8"), ensure_ascii=False)
+            print(f"ref {c['key']}: {len(r.text)} 字, {len(r.words)} 词")
+        return
+
     refs = {c["key"]: json.load(open(CASE / "refs" / f"{c['key']}.json", encoding="utf-8")) for c in clips}
     han = re.compile(r"[㐀-鿿豈-﫿]")
 
@@ -119,7 +146,7 @@ def main():
         k = c["key"]
         r = eng.transcribe(str(wavs[k]))
         hyp = r.ctc_text
-        rc, hc = to_chars(refs[k]["final_text"]), to_chars(hyp)
+        rc, hc = to_chars(refs[k]["final_text"], cjk[k]), to_chars(hyp, cjk[k])
         row = {"clip": k, "ctc_ratio": len(hc) / max(1, len(rc)),
                "cer": edit_distance(list(rc), list(hc)) / max(1, len(rc)),
                "han": len(han.findall(hyp)), "ctc_text": hyp}
@@ -145,7 +172,7 @@ def main():
         print(f"{r['clip']:<7s}{r['ctc_ratio'] * 100:9.1f}%{r['cer'] * 100:7.1f}%{r['han']:6d}{g1:>12s}{g2:>8s}{mx:>10s}  {r['final_same']}"
               + (f"  {r['note']}" if r.get("note") else ""))
 
-    out = a.out or ROOT / "results" / f"en_regression_{a.label}.json"
+    out = a.out or ROOT / "results" / f"{a.case}_{a.label}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     json.dump({"label": a.label, "head": str(a.head), "rows": rows}, open(out, "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
