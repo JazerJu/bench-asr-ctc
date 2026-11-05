@@ -12,7 +12,7 @@
 
 ## a7_avg5 更新
 
-HF 权重上传尚待发布账号登录；下方新下载命令需等上传后才能使用，原有 `fetch` 不受影响。
+HF 的 ONNX / PyTorch 权重、model card 与校验清单均已上传；使用下方命令单独下载 a7，原有 `fetch` 不受影响。
 
 新增 self-conditioned Qwen3 CTC 头，引擎名 `qwen_a7avg5`，默认 HQQ int4 权重 + fp16 激活。
 针对 [CapsWriter #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457)

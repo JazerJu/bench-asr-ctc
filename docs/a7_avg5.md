@@ -1,8 +1,9 @@
 # a7_avg5 Release And Regression Results
 
-Publication status: code/results are prepared; the HF payload is validated but
-upload is pending publisher authentication. The links below are upload targets,
-not a claim that the files are already available.
+Publication status: code/results and both HF payloads are published.
+ONNX revision: `659fb65a8bcb30bd419b23bae97f060abcb03500`;
+PyTorch revision: `2a286f7c3ebbd99130cb64e71d94d33e1859f36c`.
+The new file hashes and retention of the historical files have been verified.
 
 This is a new self-conditioned Qwen3 CTC head, not an overwrite of aiinfra4.
 Only a7_avg5 weights are added in this release; a5/a6 results are retained as

@@ -11,8 +11,8 @@ Tests three capabilities on identical audio:
 
 ## a7_avg5 Update
 
-HF upload is pending publisher authentication. The new download command below
-requires that upload; existing `fetch` remains unchanged.
+The ONNX and PyTorch weights, model cards, and checksums are published on HF.
+The a7 download below is opt-in; existing `fetch` remains unchanged.
 
 The new self-conditioned Qwen3 CTC head is registered as `qwen_a7avg5` (default:
 HQQ int4 weights + fp16 activations). It reduces the English-to-Chinese leakage
