@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from bench.models import get_engine
+from bench.models import ENGINES, get_engine
 
 
 def to_wav16k(src: Path, tmpdir: Path) -> Path:
@@ -34,7 +34,7 @@ def to_wav16k(src: Path, tmpdir: Path) -> Path:
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("audio", help="input audio (any ffmpeg-readable format, designed for ≤30s)")
-    ap.add_argument("--engine", default="glm", choices=["glm", "fun", "qwen"], help="CTC backend")
+    ap.add_argument("--engine", default="glm", choices=sorted(ENGINES), help="CTC backend")
     ap.add_argument("--cpu", action="store_true", help="run ONNX on CPU (default CUDA when available)")
     args = ap.parse_args()
 

@@ -36,7 +36,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-VIDEO_DIR = Path("/media/jju/ExtraDisk/VidGo/backend/media/saved_video")
+VIDEO_DIR = Path(os.environ.get("VIDGO_VIDEO_DIR", "/media/jju/ExtraDisk/VidGo/backend/media/saved_video"))
 
 
 def to_chars(s: str, keep_cjk: bool = False) -> str:
@@ -76,16 +76,23 @@ def cues(words, max_sec=12.0, max_chars=90):
     return out
 
 
-def ensure_wav(case: Path, c: dict) -> Path:
+def ensure_wav(case: Path, c: dict, video_dir: Path = VIDEO_DIR) -> Path:
     wav = case / "audio" / f"{c['key']}.wav"
     if not wav.exists():
+        source = video_dir / f"{c['vidgo_hash']}.mp4"
+        if not source.is_file():
+            raise FileNotFoundError(
+                f"Missing {wav}. Audio is not bundled; place a mono 16 kHz WAV there, "
+                f"or use --video-dir with the original VidGo media ({source.name}). "
+                f"See {case / 'README.md'}."
+            )
         wav.parent.mkdir(parents=True, exist_ok=True)
         cut = []
         if c.get("start"):
             cut += ["-ss", c["start"]]
         if c.get("dur"):
             cut += ["-t", c["dur"]]
-        subprocess.run(["ffmpeg", "-v", "error", "-y", *cut, "-i", str(VIDEO_DIR / f"{c['vidgo_hash']}.mp4"),
+        subprocess.run(["ffmpeg", "-v", "error", "-y", *cut, "-i", str(source),
                         "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(wav)], check=True)
     return wav
 
@@ -115,13 +122,14 @@ def main():
                     default=Path(os.environ.get("CAPSWRITER_ROOT", "/data/AI应用/流式转录/CapsWriter-Offline")))
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--case", default="en_regression")
+    ap.add_argument("--video-dir", type=Path, default=VIDEO_DIR)
     ap.add_argument("--make-refs", action="store_true",
                     help="用这个头的完整流水线输出生成 refs/（只在建新回归集时用一次，通常用 v1 头）")
     a = ap.parse_args()
 
     CASE = ROOT / "cases" / a.case
     clips = list(csv.DictReader(open(CASE / "clips.tsv", encoding="utf-8"), delimiter="\t"))
-    wavs = {c["key"]: ensure_wav(CASE, c) for c in clips}
+    wavs = {c["key"]: ensure_wav(CASE, c, a.video_dir) for c in clips}
     cjk = {c["key"]: c.get("lang", "en") == "zh" for c in clips}
 
     if a.make_refs:

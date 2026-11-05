@@ -9,7 +9,34 @@ Tests three capabilities on identical audio:
 2. **Hotword DP matching** — CapsWriter-style pypinyin phoneme + fuzzy edit-distance pipeline (CTC text is never modified; matched hotwords are reported as LLM-prompt hints)
 3. **Reproducibility** — every engine behind one interface (`encode` → `decode_text`), int4-on-int4 fair comparison
 
-## Results snapshot (all engines int4, FLEURS **full official test split**, 7,876 samples, all on CUDA EP)
+## a7_avg5 Update
+
+HF upload is pending publisher authentication. The new download command below
+requires that upload; existing `fetch` remains unchanged.
+
+The new self-conditioned Qwen3 CTC head is registered as `qwen_a7avg5` (default:
+HQQ int4 weights + fp16 activations). It reduces the English-to-Chinese leakage
+reported in [CapsWriter #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457).
+It does not replace the historical `qwen` or `qwen_aiinfra4` weights.
+
+```bash
+python scripts/download_models.py a7avg5
+python bench.py --counts 20 --engines qwen_a7avg5 --langs en_us,cmn_hans_cn
+python scripts/summarize_a7.py  # saved a6/a7 results; no audio, weights, or GPU
+```
+
+On the 17-clip Chinese regression subset, a7_avg5 HQQ CER is **14.96%**
+(a6_avg5 HQQ: 16.20%); the 6-clip English regression CER is **5.98%** (6.68%).
+References are v1+LLM pseudo-labels and these are per-clip macro means, not
+held-out corpus scores. TED leakage is reduced but not eliminated (6 CTC Han
+characters in 29 talks); TED overlaps training data.
+
+[Release details, precision choices, raw results, and audio preparation](docs/a7_avg5.md).
+Long-video audio is not bundled: fresh inference needs the source media, while
+saved-result summaries do not. The tables below retain their original revisions;
+they are **not** re-labelled as a7_avg5 results.
+
+## Historical Results (all engines int4, FLEURS **full official test split**, 7,876 samples, all on CUDA EP)
 
 | lang | metric | n | GLM-CTC | Fun-ASR-Nano | Qwen3-CTC | winner |
 |---|---|---|---|---|---|---|

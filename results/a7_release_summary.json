@@ -1,0 +1,60 @@
+{
+  "aggregation": "macro mean over clips",
+  "zh_excluded_non_chinese": [
+    "v623",
+    "v669",
+    "v736"
+  ],
+  "reference": "saved v1+LLM outputs",
+  "ted_training_overlap": true,
+  "rows": [
+    {
+      "label": "a6avg5_fp16",
+      "zh_cer": 0.15959587897378796,
+      "zh_ratio": 0.8909888880946144,
+      "en_cer": 0.06392844652422235,
+      "ted_ctc_han": 6,
+      "ted_parts_with_han": 3
+    },
+    {
+      "label": "a6avg5_q4f16",
+      "zh_cer": 0.17728672095962278,
+      "zh_ratio": 0.8699622379531372,
+      "en_cer": 0.06817254888439192,
+      "ted_ctc_han": 7,
+      "ted_parts_with_han": 4
+    },
+    {
+      "label": "a6avg5_hqqf16",
+      "zh_cer": 0.1619625500893611,
+      "zh_ratio": 0.8918689491544021,
+      "en_cer": 0.06682936353046567,
+      "ted_ctc_han": 11,
+      "ted_parts_with_han": 6
+    },
+    {
+      "label": "a7avg5_fp16",
+      "zh_cer": 0.14353831537877695,
+      "zh_ratio": 0.911338538544275,
+      "en_cer": 0.055864866695675246,
+      "ted_ctc_han": 5,
+      "ted_parts_with_han": 3
+    },
+    {
+      "label": "a7avg5_q4f16",
+      "zh_cer": 0.15068621862592996,
+      "zh_ratio": 0.9038962023062835,
+      "en_cer": 0.06293946125839146,
+      "ted_ctc_han": 5,
+      "ted_parts_with_han": 4
+    },
+    {
+      "label": "a7avg5_hqqf16",
+      "zh_cer": 0.14962616355336583,
+      "zh_ratio": 0.9070416957201961,
+      "en_cer": 0.05978362989622533,
+      "ted_ctc_han": 6,
+      "ted_parts_with_han": 4
+    }
+  ]
+}

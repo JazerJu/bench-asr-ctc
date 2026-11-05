@@ -7,13 +7,20 @@ HF repo: `JazerJu/glm-asr-ctc-bench` — pre-quantized int4, no manual steps.
 - GLM-ASR-CTC-Final134k.q4.onnx (fp32 variant optional: FETCH_FP32=1)
 - tokens-phase2.txt (BPE 59264)
 
-## fun-asr/  (manual copy: `python scripts/download_models.py fun`)
-Third-party Fun-ASR-Nano, not redistributed. Copy these 3 files from a
-CapsWriter-Offline install (`models/Fun-ASR-Nano/Fun-ASR-Nano-GGUF/`):
+## fun-asr/ (`python scripts/download_models.py fun`)
+Third-party Fun-ASR-Nano int4 exports, mirrored in the same HF bench repo:
 - Fun-ASR-Nano-Encoder-Adaptor.int4.onnx
 - Fun-ASR-Nano-CTC.int4.onnx
 - tokens.txt
 
-## qwen-ctc/  (RESERVED)
-Drop future Qwen3-ASR CTC ONNX exports here, then implement
-`QwenEngine.encode/decode_text` in bench/models.py (interface documented in-code).
+## qwen-ctc/ (`python scripts/download_models.py fetch`)
+Shared frozen encoder, original v1 head, base64 byte vocabulary, and
+`preprocessor_config.json`. Do not substitute another vocabulary.
+
+## qwen-ctc-a7avg5/ (`python scripts/download_models.py a7avg5`)
+New head only: `Qwen3-ASR-CTC.{hqqf16,q4f16,q4}.onnx`, `config.json`.
+`FETCH_FP16=1` also downloads `Qwen3-ASR-CTC.fp16.onnx`.
+The engine `qwen_a7avg5` defaults to hqqf16 and reuses `qwen-ctc/`.
+For a7 DirectML, use `fetch-fp16` for the shared encoder and
+`FETCH_FP16=1 python scripts/download_models.py a7avg5` for the new head.
+See [release details](../docs/a7_avg5.md); all weights remain gitignored.

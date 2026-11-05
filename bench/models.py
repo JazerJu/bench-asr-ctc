@@ -605,13 +605,17 @@ class QwenAiinfra2Engine(QwenEngine):
 
     CTC_SUBDIR = "qwen-ctc-aiinfra2"
 
-    def __init__(self, use_gpu: bool = True, quantized: bool = True):
-        d_enc = MODELS_DIR / "qwen-ctc"
-        d_ctc = MODELS_DIR / self.CTC_SUBDIR
+    def model_paths(self, quantized: bool = True):
         tag = _precision_tag(quantized)
         enc_tag = "q4" if tag == "fp16" else tag
-        self.enc_sess = _session(d_enc / f"Qwen3-ASR-Encoder.{enc_tag}.onnx", use_gpu=use_gpu)
-        self.ctc_sess = _session(d_ctc / f"Qwen3-ASR-CTC.{tag}.onnx", use_gpu=use_gpu)
+        return (MODELS_DIR / "qwen-ctc" / f"Qwen3-ASR-Encoder.{enc_tag}.onnx",
+                MODELS_DIR / self.CTC_SUBDIR / f"Qwen3-ASR-CTC.{tag}.onnx")
+
+    def __init__(self, use_gpu: bool = True, quantized: bool = True):
+        d_enc = MODELS_DIR / "qwen-ctc"
+        encoder, head = self.model_paths(quantized)
+        self.enc_sess = _session(encoder, use_gpu=use_gpu)
+        self.ctc_sess = _session(head, use_gpu=use_gpu)
         self.id2bytes = {}
         import base64
         for line in open(d_enc / "tokens.txt", encoding="utf-8"):
@@ -647,6 +651,31 @@ class QwenAiinfra5Engine(QwenAiinfra2Engine):
     CTC_SUBDIR = "qwen-ctc-aiinfra5"
 
 
+class QwenA7Avg5Engine(QwenAiinfra2Engine):
+    """a7_avg5：修 #457 的「英文音频串出中文」，CapsWriter 线上用的就是这一版。
+
+    aiinfra6 从 v1-ja-sc 续训，删掉 2,445 段「英文语音配中文翻译字幕」的训练段；aiinfra7 接 aiinfra6
+    续训约 8 万步（中文长段 x2、短段 x3，4 卡 x 32 x 2 = 256），取末段 5 个 checkpoint
+    （step 412,000–420,000）的平均。架构与 aiinfra4 相同。
+
+    默认量化用 HQQ int4（fp16 激活，hqqf16），zh_long20 上 CER 比 RTN 的 q4f16 低。"""
+
+    CTC_SUBDIR = "qwen-ctc-a7avg5"
+
+    def model_paths(self, quantized: bool = True):
+        tag = (os.environ.get("BENCH_PRECISION") or
+               ("hqqf16" if quantized else "fp32")).lower()
+        if tag not in ("q4", "q4f16", "hqqf16", "fp16"):
+            raise ValueError(f"a7_avg5 supports q4, q4f16, hqqf16, fp16; got {tag!r}")
+        provider = (os.environ.get("BENCH_ORT_PROVIDER") or "auto").lower()
+        if provider == "dml" and tag != "fp16":
+            raise ValueError("DirectML requires --precision fp16 (no MatMulNBits)")
+        # Historical head comparisons keep the shared q4 encoder fixed.
+        enc_tag = "fp16" if provider == "dml" else "q4"
+        return (MODELS_DIR / "qwen-ctc" / f"Qwen3-ASR-Encoder.{enc_tag}.onnx",
+                MODELS_DIR / self.CTC_SUBDIR / f"Qwen3-ASR-CTC.{tag}.onnx")
+
+
 ENGINES = {
     "glm": GLMEngine,
     "fun": FunEngine,
@@ -664,6 +693,7 @@ ENGINES = {
     "qwen_aiinfra3": QwenAiinfra3Engine,
     "qwen_aiinfra4": QwenAiinfra4Engine,
     "qwen_aiinfra5": QwenAiinfra5Engine,
+    "qwen_a7avg5": QwenA7Avg5Engine,
 }
 
 

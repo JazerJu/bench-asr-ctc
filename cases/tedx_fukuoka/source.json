@@ -1,0 +1,9 @@
+{
+  "title": "猪子寿之 TEDxFukuoka 日本文化と空間デザイン",
+  "url": "https://www.youtube.com/watch?v=2szRkXyCxss",
+  "sample_rate": 16000,
+  "channels": 1,
+  "outputs": {
+    "audio16k.wav": {"start": 0}
+  }
+}

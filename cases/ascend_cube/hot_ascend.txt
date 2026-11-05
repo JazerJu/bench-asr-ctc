@@ -1,0 +1,36 @@
+昇腾
+CANN
+Ascend C
+Ascend
+Atlas A2
+Atlas A3
+Cube
+Matrix
+Matmul
+BatchMatmul
+GroupedMatmul
+FlashAttention
+Global Memory
+AI Core
+AIC
+AIV
+L1 Buffer
+L0A Buffer
+L0B Buffer
+L0C Buffer
+BT Buffer
+FP Buffer
+MTE1
+MTE2
+FixPipe
+Scalar
+DataCopy
+LoadData
+Mmad
+SetFlag
+WaitFlag
+LocalMemAllocator
+GetBlockIdx
+Tiling
+Double Buffer
+msprof

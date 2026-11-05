@@ -10,7 +10,31 @@
 2. **热词 DP 匹配** —— CapsWriter 那套 pypinyin 音素 + 模糊编辑距离(CTC 原文永不修改,命中的热词只作为 LLM prompt 的提示上报)
 3. **可复现性** —— 每个引擎都在同一个接口后面(`encode` → `decode_text`),int4 对 int4 公平比
 
-## 结果速览(三个引擎都是 int4,FLEURS **官方 test 全量** 7,876 句,全部跑 CUDA EP)
+## a7_avg5 更新
+
+HF 权重上传尚待发布账号登录；下方新下载命令需等上传后才能使用，原有 `fetch` 不受影响。
+
+新增 self-conditioned Qwen3 CTC 头，引擎名 `qwen_a7avg5`，默认 HQQ int4 权重 + fp16 激活。
+针对 [CapsWriter #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457)
+反馈的英文音频串出中文问题做了数据清洗、续训和末段 5 个 checkpoint 平均。
+旧的 `qwen` 和 `qwen_aiinfra4` 保留，不覆盖旧权重。
+
+```bash
+python scripts/download_models.py a7avg5
+python bench.py --counts 20 --engines qwen_a7avg5 --langs en_us,cmn_hans_cn
+python scripts/summarize_a7.py  # 只读已保存的结果，不需要音频、模型或 GPU
+```
+
+中文 17 段回归集上，a7_avg5 HQQ CER 为 **14.96%**（a6_avg5 HQQ 为 16.20%），
+英文 6 段为 **5.98%**（6.68%）。参考是 v1+LLM 伪标签，数字是逐视频宏平均，
+不等于人工真值上的独立测试成绩。TED 29 段的 CTC 汉字总数降至 6，但并非零；
+其中多篇与 TED-LIUM 训练数据重叠，只作回归检查。
+
+[版本、精度、原始结果与音频准备说明](docs/a7_avg5.md)。
+长视频音频不入库，重新推理前需准备原始媒体；只汇总保存的结果不需要音频。
+下表仍是各自原版本的历史成绩，**没有当作 a7_avg5 的新成绩**。
+
+## 历史结果(三个引擎都是 int4,FLEURS **官方 test 全量** 7,876 句,全部跑 CUDA EP)
 
 | 语种 | 指标 | n | GLM-CTC | Fun-ASR-Nano | Qwen3-CTC | 胜者 |
 |---|---|---|---|---|---|---|

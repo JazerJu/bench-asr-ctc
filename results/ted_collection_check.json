@@ -1,0 +1,1042 @@
+{
+ "heads": "v1,v1_ja,aiinfra4,aiinfra5,aiinfra6",
+ "contamination": {
+  "1": [
+   0,
+   3,
+   8
+  ],
+  "2": [
+   8,
+   8,
+   8
+  ],
+  "3": [
+   3,
+   3,
+   8
+  ],
+  "4": [
+   2,
+   2,
+   8
+  ],
+  "5": [
+   3,
+   3,
+   8
+  ],
+  "6": [
+   2,
+   2,
+   8
+  ],
+  "7": [
+   6,
+   6,
+   8
+  ],
+  "8": [
+   2,
+   2,
+   8
+  ],
+  "9": [
+   7,
+   7,
+   8
+  ],
+  "10": [
+   5,
+   5,
+   8
+  ],
+  "11": [
+   6,
+   6,
+   8
+  ],
+  "12": [
+   5,
+   5,
+   8
+  ],
+  "13": [
+   6,
+   6,
+   8
+  ],
+  "14": [
+   4,
+   4,
+   8
+  ],
+  "15": [
+   4,
+   4,
+   8
+  ],
+  "16": [
+   5,
+   5,
+   8
+  ],
+  "17": [
+   3,
+   3,
+   8
+  ],
+  "18": [
+   0,
+   0,
+   8
+  ],
+  "19": [
+   4,
+   4,
+   8
+  ],
+  "20": [
+   3,
+   3,
+   8
+  ],
+  "21": [
+   4,
+   4,
+   8
+  ],
+  "22": [
+   4,
+   4,
+   8
+  ],
+  "23": [
+   3,
+   3,
+   8
+  ],
+  "24": [
+   0,
+   0,
+   8
+  ],
+  "25": [
+   1,
+   1,
+   8
+  ],
+  "26": [
+   0,
+   0,
+   8
+  ],
+  "27": [
+   4,
+   4,
+   8
+  ],
+  "28": [
+   7,
+   7,
+   8
+  ],
+  "29": [
+   2,
+   2,
+   8
+  ]
+ },
+ "results": {
+  "v1": {
+   "1": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "2": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "3": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "4": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "5": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "6": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "7": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "8": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "9": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "10": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "11": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "12": {
+    "ctc_han": 3,
+    "spans": [
+     "相同的"
+    ],
+    "final_han": 0
+   },
+   "13": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "14": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "15": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "16": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "17": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "18": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "19": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "20": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "21": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "22": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "23": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "24": {
+    "ctc_han": 1,
+    "spans": [
+     "嗯"
+    ],
+    "final_han": 0
+   },
+   "25": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "26": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "27": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "28": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "29": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   }
+  },
+  "v1_ja": {
+   "1": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "2": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "3": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "4": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "5": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "6": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "7": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "8": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "9": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "10": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "11": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "12": {
+    "ctc_han": 3,
+    "spans": [
+     "相同的"
+    ],
+    "final_han": 0
+   },
+   "13": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "14": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "15": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "16": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "17": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "18": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "19": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "20": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "21": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "22": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "23": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "24": {
+    "ctc_han": 1,
+    "spans": [
+     "嗯"
+    ],
+    "final_han": 0
+   },
+   "25": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "26": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "27": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "28": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "29": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   }
+  },
+  "aiinfra4": {
+   "1": {
+    "ctc_han": 36,
+    "spans": [
+     "我",
+     "或",
+     "他们",
+     "到",
+     "我们",
+     "他们",
+     "他们",
+     "我们的",
+     "我们",
+     "我们",
+     "我们他们",
+     "我们",
+     "我们",
+     "我们",
+     "我们",
+     "我们必须",
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "2": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "3": {
+    "ctc_han": 2,
+    "spans": [
+     "喂",
+     "被"
+    ],
+    "final_han": 0
+   },
+   "4": {
+    "ctc_han": 9,
+    "spans": [
+     "我们",
+     "我们",
+     "非常",
+     "我认为"
+    ],
+    "final_han": 0
+   },
+   "5": {
+    "ctc_han": 3,
+    "spans": [
+     "我认为"
+    ],
+    "final_han": 0
+   },
+   "6": {
+    "ctc_han": 2,
+    "spans": [
+     "指出"
+    ],
+    "final_han": 0
+   },
+   "7": {
+    "ctc_han": 1,
+    "spans": [
+     "葉"
+    ],
+    "final_han": 1
+   },
+   "8": {
+    "ctc_han": 4,
+    "spans": [
+     "台湾",
+     "狗",
+     "迎"
+    ],
+    "final_han": 1
+   },
+   "9": {
+    "ctc_han": 9,
+    "spans": [
+     "从",
+     "我",
+     "我",
+     "我们",
+     "他们",
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "10": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "11": {
+    "ctc_han": 16,
+    "spans": [
+     "我们",
+     "我们",
+     "我们",
+     "但",
+     "我们",
+     "但",
+     "我们的",
+     "我们",
+     "从"
+    ],
+    "final_han": 0
+   },
+   "12": {
+    "ctc_han": 4,
+    "spans": [
+     "和",
+     "相同的"
+    ],
+    "final_han": 0
+   },
+   "13": {
+    "ctc_han": 2,
+    "spans": [
+     "非常"
+    ],
+    "final_han": 0
+   },
+   "14": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "15": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "16": {
+    "ctc_han": 18,
+    "spans": [
+     "被",
+     "非常",
+     "非常",
+     "从",
+     "科目",
+     "我们",
+     "我们",
+     "我们",
+     "非常",
+     "我们"
+    ],
+    "final_han": 0
+   },
+   "17": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "18": {
+    "ctc_han": 2,
+    "spans": [
+     "我们"
+    ],
+    "final_han": 0
+   },
+   "19": {
+    "ctc_han": 9,
+    "spans": [
+     "我们",
+     "机器人",
+     "我们",
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "20": {
+    "ctc_han": 14,
+    "spans": [
+     "来",
+     "来",
+     "来",
+     "来",
+     "我",
+     "推理",
+     "来",
+     "来",
+     "诠释",
+     "来",
+     "我们"
+    ],
+    "final_han": 0
+   },
+   "21": {
+    "ctc_han": 1,
+    "spans": [
+     "子"
+    ],
+    "final_han": 0
+   },
+   "22": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "23": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "24": {
+    "ctc_han": 1,
+    "spans": [
+     "気"
+    ],
+    "final_han": 0
+   },
+   "25": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "26": {
+    "ctc_han": 5,
+    "spans": [
+     "但",
+     "最好的",
+     "我"
+    ],
+    "final_han": 0
+   },
+   "27": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "28": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "29": {
+    "ctc_han": 17,
+    "spans": [
+     "年",
+     "我们",
+     "工",
+     "互联网",
+     "有",
+     "我们",
+     "最",
+     "最",
+     "我们",
+     "我们",
+     "年"
+    ],
+    "final_han": 0
+   }
+  },
+  "aiinfra5": {
+   "1": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "2": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "3": {
+    "ctc_han": 1,
+    "spans": [
+     "喂"
+    ],
+    "final_han": 0
+   },
+   "4": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "5": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "6": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "7": {
+    "ctc_han": 1,
+    "spans": [
+     "葉"
+    ],
+    "final_han": 1
+   },
+   "8": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "9": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "10": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "11": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "12": {
+    "ctc_han": 4,
+    "spans": [
+     "和",
+     "相同的"
+    ],
+    "final_han": 0
+   },
+   "13": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "14": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "15": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "16": {
+    "ctc_han": 2,
+    "spans": [
+     "科目"
+    ],
+    "final_han": 0
+   },
+   "17": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "18": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "19": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "20": {
+    "ctc_han": 2,
+    "spans": [
+     "活力"
+    ],
+    "final_han": 0
+   },
+   "21": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "22": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "23": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "24": {
+    "ctc_han": 1,
+    "spans": [
+     "気"
+    ],
+    "final_han": 0
+   },
+   "25": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "26": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "27": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "28": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "29": {
+    "ctc_han": 5,
+    "spans": [
+     "工",
+     "我们",
+     "我们"
+    ],
+    "final_han": 0
+   }
+  },
+  "aiinfra6": {
+   "1": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "2": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "3": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "4": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "5": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "6": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "7": {
+    "ctc_han": 1,
+    "spans": [
+     "葉"
+    ],
+    "final_han": 1
+   },
+   "8": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 1
+   },
+   "9": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "10": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "11": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "12": {
+    "ctc_han": 3,
+    "spans": [
+     "相同的"
+    ],
+    "final_han": 0
+   },
+   "13": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "14": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "15": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "16": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "17": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "18": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "19": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "20": {
+    "ctc_han": 2,
+    "spans": [
+     "活力"
+    ],
+    "final_han": 0
+   },
+   "21": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "22": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "23": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "24": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "25": {
+    "ctc_han": 2,
+    "spans": [
+     "谢谢"
+    ],
+    "final_han": 0
+   },
+   "26": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "27": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "28": {
+    "ctc_han": 0,
+    "spans": [],
+    "final_han": 0
+   },
+   "29": {
+    "ctc_han": 1,
+    "spans": [
+     "工"
+    ],
+    "final_han": 0
+   }
+  }
+ }
+}

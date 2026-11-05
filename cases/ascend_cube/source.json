@@ -1,0 +1,10 @@
+{
+  "title": "华为高性能 Matrix(Cube) 算子开发实践 (P1)",
+  "url": "https://www.bilibili.com/video/BV16AKG6nEjz/?p=1",
+  "sample_rate": 16000,
+  "channels": 1,
+  "outputs": {
+    "audio_full.wav": {"start": 0},
+    "audio_10m30s.wav": {"start": 0, "duration": 630}
+  }
+}

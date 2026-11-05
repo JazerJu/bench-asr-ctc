@@ -76,6 +76,12 @@ def run(args):
             else {"ctc": "Qwen3-ASR-CTC-56916", "quantized": True} if n == "qwen"
             else {"ctc": "Qwen3-ASR-CTC-r2-142295", "quantized": True} if n == "qwen_r2"
             else {"ctc": "Qwen3-ASR-CTC-r2-fp16", "quantized": False} if n == "qwen_r2_fp16"
+            else {"ctc": "Qwen3-ASR-CTC-a7_avg5-412000-420000",
+                  "quantized": engines[n].model_paths()[1].name.split(".")[-2] != "fp16",
+                  "precision": engines[n].model_paths()[1].name.split(".")[-2],
+                  "encoder_path": str(engines[n].model_paths()[0]),
+                  "head_path": str(engines[n].model_paths()[1])} if n == "qwen_a7avg5"
+            else {"ctc": n} if n.startswith("qwen_")
             else "fun-asr-nano-int4")
         for n in engine_names
     }
@@ -85,6 +91,8 @@ def run(args):
         "engines": engine_labels,
         "onnxruntime": ort.__version__,
         "providers": {n: (engines[n].enc_sess.get_providers()[0] if hasattr(engines[n], "enc_sess") else "?") for n in engine_names},
+        "ctc_providers": {n: engines[n].ctc_sess.get_providers()
+                          for n in engine_names if hasattr(engines[n], "ctc_sess")},
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     results = {}
