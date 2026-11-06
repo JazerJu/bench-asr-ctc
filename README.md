@@ -37,6 +37,9 @@ they are **not** re-labelled as a7_avg5 results.
 
 ## Historical Results (all engines int4, FLEURS **full official test split**, 7,876 samples, all on CUDA EP)
 
+> These are **v1-era** numbers (2026-08/09): Qwen3-CTC is the 56,916-step v1 head and GLM is
+> `final134k`. They are not a7_avg5 results — current head: [docs/a7_avg5.md](docs/a7_avg5.md).
+
 | lang | metric | n | GLM-CTC | Fun-ASR-Nano | Qwen3-CTC | winner |
 |---|---|---|---|---|---|---|
 | en_us | WER | 647 | 18.3% | **18.1%** | 18.3% | Fun (tie, 0.2pp) |
@@ -57,7 +60,8 @@ they are **not** re-labelled as a7_avg5 results.
 
 Qwen3-CTC notes: encoder is half of GLM's params (317.5M vs 635.0M) at 13fps (GLM: 50fps) — roughly 1/8 the compute per audio second. Its ko/yue wins come from the Qwen3-ASR base's multilingual pretraining; the GLM-vs-Qwen gap on zh/en traces to training recipe (same data, 512×56,916 vs 256×134,140 updates — controlled experiment pending).
 
-Provider parity note: Fun int4 ONNX is **not** provider-invariant — ORT CPU vs CUDA EP transcripts differ on ~5% of samples (up to 1.9pp CER, CPU weaker; see `runners/parity_check.py`). All published numbers use all engines on CUDA EP.
+Provider parity note: Fun int4 ONNX is **not** provider-invariant — ORT CPU vs CUDA EP transcripts differ on ~5% of samples (up to 1.9pp CER, CPU weaker; see `runners/parity_check.py`). All published numbers use all engines on CUDA EP. a7_avg5's RTN q4/q4f16 and HQQ hqqf16 heads
+are also MatMulNBits graphs, so DirectML needs the fp16 graphs (`--precision fp16`).
 
 Reproducibility: `python bench.py --counts 200 --engines glm fun qwen` (~2,200 samples/engine, deterministic strided sampling — identical `--counts` always evaluates identical sentences).
 
@@ -79,9 +83,10 @@ python scripts/download_models.py fetch
 #    + qwen-ctc/ from JazerJu/glm-asr-ctc-bench/qwen-ctc (encoder q4 + CTC q4 +
 #                tokens.txt + preprocessor_config.json)
 #
-# One command pulls all three engines. FETCH_FP16=1 adds the fp16 variants,
-# FETCH_FP32=1 adds GLM's fp32. Everything under models/ comes from this step
-# and is gitignored — the repo tracks no weights.
+# One command pulls the three engines plus the aiinfra4 head. a7_avg5 is opt-in:
+#   python scripts/download_models.py a7avg5
+# FETCH_FP16=1 adds the fp16 variants, FETCH_FP32=1 adds GLM's fp32. Everything
+# under models/ comes from this step and is gitignored — the repo tracks no weights.
 ```
 
 ## Run
@@ -113,37 +118,79 @@ Every result JSON records a `meta` block (engine revisions, quantization, ORT ve
 
 ```
 bench/
-  models.py        # engine registry: GLMEngine / FunEngine / QwenEngine
+  models.py        # engine registry: GLMEngine / FunEngine / QwenEngine (+aiinfra rounds)
   metrics.py       # WER/CER + per-language normalization
   hotword/         # PhonemeCorrector DP matching (CapsWriter-derived)
 runners/
   bench_fleurs.py  # multi-language transcription benchmark
   bench_hotword.py # hotword hit/miss/false-positive check
-cases/             # 4 bundled 30s test clips + expected hotwords
+cases/             # 4 bundled 30s clips (cases.json + hotwords) and the long-video sets:
+                   #   en_regression/ zh_regression/ zh_long20/ ted_collection/
+                   #   tedx_fukuoka/ ascend_cube/  (audio is not tracked; see each README)
+docs/
+  a7_avg5.md       # current head: results, precision, audio availability
+tests/
+  test_release.py  # engine paths, downloader layout, audio preparation
 models/
   glm-ctc/         # encoder.q4.onnx(+.data), projector, ctc-final134k.q4.onnx, tokens
   fun-asr/         # Fun-ASR-Nano int4 trio (from JazerJu/glm-asr-ctc-bench/fun-asr)
-  qwen-ctc/        # Qwen3-ASR encoder q4, our CTC head q4/fp32, tokens, preprocessor
+  qwen-ctc/        # shared encoder q4, v1 head, tokens, preprocessor
+  qwen-ctc-aiinfra4/  # aiinfra4 head (q4/q4f16) — download_models.py aiinfra4
+  qwen-ctc-a7avg5/    # a7_avg5 head (q4/q4f16/hqqf16) — download_models.py a7avg5
 scripts/
-  download_models.py  # fetch (HF) / fun (local copy) / publish (one-time upload)
+  download_models.py  # fetch / aiinfra4 / a7avg5 / fetch-fp16 / fun / publish
+  en_regression.py    # long-audio regression runner (CapsWriter runtime)
+  ted_collection_check.py / summarize_a7.py / prepare_case_audio.py / del_pos.py
 ```
 
 ## The Qwen engine
 
-`QwenEngine` in `bench/models.py` is live: frozen official Qwen3-ASR encoder (int4, 13fps fixed-30s-bucket ONNX) + our trained CTC head (`JazerJu/qwen3-asr-ctc`, 56,916 steps). ONNX-chain parity vs the training-side PyTorch: LibriSpeech test-clean WER 6.92% vs 6.93% (`runners/qwen_librispeech_parity.py`). Export details: `../Qwen3-ASR-CTC-GGUF/`.
+`QwenEngine` (`qwen`) is v1: frozen official Qwen3-ASR encoder (int4, 13fps fixed-30s-bucket
+ONNX) + our 56,916-step head (`JazerJu/qwen3-asr-ctc`). ONNX-chain parity vs the training-side
+PyTorch: LibriSpeech test-clean WER 6.92% vs 6.93% (`runners/qwen_librispeech_parity.py`).
+
+Later rounds reuse the same frozen encoder and vocabulary, swapping only the head:
+`qwen_aiinfra4` (2026-09) and `qwen_a7avg5` (current, fixes the English-audio Chinese leakage
+from #457). See [docs/a7_avg5.md](docs/a7_avg5.md) for results and caveats.
+Export details: `../Qwen3-ASR-CTC-GGUF/`.
 
 ## Model provenance
 
 - GLM encoder/projector: exported from `zai-org/GLM-ASR-Nano-2512` (MIT), int4-quantized by us
 - GLM CTC head: our training (134k steps, warmup + 5 transformer blocks, BPE 59264), published at `JazerJu/glm-asr-ctc-bench`
 - Fun-ASR-Nano: HaujetZhao/CapsWriter-Offline model suite (int4 trio mirrored at JazerJu/glm-asr-ctc-bench/fun-asr)
-- Qwen3 encoder: official `Qwen/Qwen3-ASR-1.7B` audio tower (frozen), int4 by us; CTC head ours (`JazerJu/qwen3-asr-ctc`)
+- Qwen3 encoder: official `Qwen/Qwen3-ASR-1.7B` audio tower (frozen), int4 by us
+- Qwen3 CTC heads, all ours: v1 `JazerJu/qwen3-asr-ctc`; aiinfra4 and a7_avg5 under
+  `JazerJu/qwen3-asr-ctc-aiinfra` (a7_avg5/ subdirectory)
 - FLEURS: `google/fleurs` (CC-BY-4.0), auto-fetched
 
-## Two Qwen3 CTC head revisions
+Test-set availability — only FLEURS is fetched by the scripts themselves:
 
-`models/qwen-ctc/` holds v1; v2 goes in `models/qwen-ctc-r2/` (both gitignored).
-v2 is **a trade, not a general improvement** — better English, worse Chinese:
+| dataset | how a third party gets it |
+|---|---|
+| FLEURS | automatic (`hf_hub_download`, cached under `HF_HOME`) |
+| Buckeye | public on HF, but `runners/bench_buckeye.py` currently hardcodes a local snapshot path |
+| LibriSpeech | public; `runners/qwen_librispeech_parity.py` currently hardcodes `/data/datasets/...` |
+| AISHELL-1 | public (registration required); not wired into this repo |
+| ASCEND | in-house corpus — **not publicly reproducible** |
+
+None of these corpora are mirrored here; only derived reference text for the long-video sets
+is tracked, because it is generated rather than published.
+
+## Qwen3 CTC head revisions
+
+There are 15 `qwen*` engine entries; three of them have published ONNX weights:
+
+| round | engine | weights | fetch |
+|---|---|---|---|
+| v1 | `qwen` | HF `qwen-ctc/` | `download_models.py fetch` |
+| aiinfra4 | `qwen_aiinfra4` | HF `qwen-ctc-aiinfra4/` | `download_models.py aiinfra4` |
+| a7_avg5 (current) | `qwen_a7avg5` | HF `qwen-ctc-a7avg5/` | `download_models.py a7avg5` |
+| r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` … | not published | export locally |
+
+`models/qwen-ctc/` holds v1; unpublished heads go in their own `models/qwen-ctc-<round>/`
+(all gitignored). The v1-vs-v2 comparison below is a **2026-08 historical experiment**:
+v2 was a trade, not a general improvement — better English, worse Chinese.
 
 | test set | metric | GLM | Qwen3 v1 | Qwen3 v2 |
 |---|---|---|---|---|
@@ -182,7 +229,8 @@ The Chinese regression is real, not noise: 95% CI [+0.07, +0.34] pp over a
 > Implementation: `scripts/bootstrap_compare.py` in
 > [glm-asr-ctc-train](https://github.com/JazerJu/glm-asr-ctc-train).
 
-Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1) and
-[qwen3-asr-ctc-r2](https://huggingface.co/JazerJu/qwen3-asr-ctc-r2) (v2).
+Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1, public) and
+`qwen3-asr-ctc-r2` (v2, currently a private repository — external readers cannot open it).
+Current head: [qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5).
 
 Engineering conventions and invariants: [AGENTS.md](AGENTS.md).

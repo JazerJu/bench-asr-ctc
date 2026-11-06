@@ -36,6 +36,9 @@ python scripts/summarize_a7.py  # 只读已保存的结果，不需要音频、�
 
 ## 历史结果(三个引擎都是 int4,FLEURS **官方 test 全量** 7,876 句,全部跑 CUDA EP)
 
+> 这里是 **v1 时期** 的数字(2026-08/09):Qwen3-CTC 是 56,916 步的 v1 头,GLM 是 `final134k`。
+> 它们不是 a7_avg5 的成绩 —— 当前头见 [docs/a7_avg5.md](docs/a7_avg5.md)。
+
 | 语种 | 指标 | n | GLM-CTC | Fun-ASR-Nano | Qwen3-CTC | 胜者 |
 |---|---|---|---|---|---|---|
 | en_us | WER | 647 | 18.3% | **18.1%** | 18.3% | Fun(差 0.2pp,平手) |
@@ -58,7 +61,8 @@ Buckeye 口语英文(全量 2,477 段 / 20 位说话人 / 145,690 词,跳过 1 �
 
 Qwen3-CTC 的几点说明:编码器参数只有 GLM 的一半(317.5M vs 635.0M),帧率 13fps(GLM 是 50fps)—— 每秒音频的计算量大约是 GLM 的 1/8。它在 ko/yue 上的优势来自 Qwen3-ASR 底座的多语种预训练;GLM 与 Qwen 在中英上的差距则要归到训练配方(同一批数据,512×56,916 对 256×134,140 次更新,对照实验待做)。
 
-关于 provider 的注意:Fun 的 int4 ONNX **不是 provider 不变的** —— ORT CPU 与 CUDA EP 的转写在约 5% 的样本上不同(最多差 1.9pp CER,CPU 更弱,见 `runners/parity_check.py`)。上表所有数字都是三个引擎统一跑 CUDA EP。
+关于 provider 的注意:Fun 的 int4 ONNX **不是 provider 不变的** —— ORT CPU 与 CUDA EP 的转写在约 5% 的样本上不同(最多差 1.9pp CER,CPU 更弱,见 `runners/parity_check.py`)。上表所有数字都是三个引擎统一跑 CUDA EP。a7_avg5 的 RTN q4/q4f16 与 HQQ hqqf16 同样是
+MatMulNBits 图,DirectML 要用 fp16 图(`--precision fp16`)。
 
 复现:`python bench.py --counts 200 --engines glm fun qwen`(每引擎约 2,200 句,采样是确定性的等距抽取 —— 同样的 `--counts` 永远评同一批句子)。
 
@@ -80,7 +84,9 @@ python scripts/download_models.py fetch
 #    + qwen-ctc/ 取自 JazerJu/glm-asr-ctc-bench/qwen-ctc(编码器 q4 + CTC q4 +
 #                tokens.txt + preprocessor_config.json)
 #
-# 一条命令三个引擎全下完。fp16 变体加 FETCH_FP16=1,GLM 的 fp32 加 FETCH_FP32=1。
+# 一条命令下完三个引擎,外加 aiinfra4 的头。a7_avg5 是单独命令:
+#   python scripts/download_models.py a7avg5
+# fp16 变体加 FETCH_FP16=1,GLM 的 fp32 加 FETCH_FP32=1。
 # models/ 下的一切都由这一步产生,仓库里不跟踪任何权重。
 ```
 
@@ -113,36 +119,77 @@ python bench.py --counts 20 --engines glm --fp32 --langs en_us
 
 ```
 bench/
-  models.py        # 引擎注册表:GLMEngine / FunEngine / QwenEngine
+  models.py        # 引擎注册表:GLMEngine / FunEngine / QwenEngine(含各续训轮)
   metrics.py       # WER/CER + 按语种的归一化
   hotword/         # PhonemeCorrector DP 匹配(源自 CapsWriter)
 runners/
   bench_fleurs.py  # 多语种转写评测
   bench_hotword.py # 热词命中/漏报/误报检查
-cases/             # 4 段 30 秒测试片段 + 期望热词
+cases/             # 4 段 30 秒片段(cases.json + 热词)与长视频回归集:
+                   #   en_regression/ zh_regression/ zh_long20/ ted_collection/
+                   #   tedx_fukuoka/ ascend_cube/(音频不入库,见各自 README)
+docs/
+  a7_avg5.md       # 当前头:结果、精度、音频可得性
+tests/
+  test_release.py  # 引擎路径、下载布局、音频准备
 models/
   glm-ctc/         # encoder.q4.onnx(+.data)、projector、ctc-final134k.q4.onnx、tokens
   fun-asr/         # Fun-ASR-Nano int4 三件套(来自 JazerJu/glm-asr-ctc-bench/fun-asr)
-  qwen-ctc/        # Qwen3-ASR 编码器 q4、我们的 CTC 头 q4/fp32、tokens、preprocessor
+  qwen-ctc/        # 共用编码器 q4、v1 头、tokens、preprocessor
+  qwen-ctc-aiinfra4/  # aiinfra4 头(q4/q4f16)—— download_models.py aiinfra4
+  qwen-ctc-a7avg5/    # a7_avg5 头(q4/q4f16/hqqf16)—— download_models.py a7avg5
 scripts/
-  download_models.py  # fetch(从 HF)/ fun(本地拷贝)/ publish(一次性上传)
+  download_models.py  # fetch / aiinfra4 / a7avg5 / fetch-fp16 / fun / publish
+  en_regression.py    # 长音频回归(需 CapsWriter 运行时)
+  ted_collection_check.py / summarize_a7.py / prepare_case_audio.py / del_pos.py
 ```
 
 ## Qwen 引擎
 
-`bench/models.py` 里的 `QwenEngine` 已接好:冻结的官方 Qwen3-ASR 编码器(int4,13fps,固定 30 秒桶的 ONNX)+ 我们训练的 CTC 头([`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc),56,916 步)。ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% 对 6.93%(`runners/qwen_librispeech_parity.py`)。导出细节见 `../Qwen3-ASR-CTC-GGUF/`。
+`QwenEngine`(`qwen`)是 v1:冻结的官方 Qwen3-ASR 编码器(int4,13fps,固定 30 秒桶的 ONNX)
++ 我们 56,916 步的 CTC 头([`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc))。
+ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% 对 6.93%
+(`runners/qwen_librispeech_parity.py`)。
+
+后续各轮共用同一份冻结编码器和词表,只换头:`qwen_aiinfra4`(2026-09)与
+`qwen_a7avg5`(当前版,修 #457 的英文音频串中文)。结果与口径见
+[docs/a7_avg5.md](docs/a7_avg5.md)。导出细节见 `../Qwen3-ASR-CTC-GGUF/`。
 
 ## 模型来源
 
 - GLM 编码器/投影器:从 `zai-org/GLM-ASR-Nano-2512`(MIT)导出,int4 量化由我们做
 - GLM CTC 头:我们训练的(134k 步,warmup + 5 层 transformer block,BPE 59264),发布在 `JazerJu/glm-asr-ctc-bench`
 - Fun-ASR-Nano:HaujetZhao/CapsWriter-Offline 的模型套件(int4 三件套镜像在 JazerJu/glm-asr-ctc-bench/fun-asr)
-- Qwen3 编码器:官方 `Qwen/Qwen3-ASR-1.7B` 的 audio tower(冻结),int4 由我们做;CTC 头是我们的(`JazerJu/qwen3-asr-ctc`)
+- Qwen3 编码器:官方 `Qwen/Qwen3-ASR-1.7B` 的 audio tower(冻结),int4 由我们做
+- Qwen3 CTC 头均为我们训练:v1 在 `JazerJu/qwen3-asr-ctc`;aiinfra4 与 a7_avg5 在
+  `JazerJu/qwen3-asr-ctc-aiinfra`(a7_avg5/ 子目录)
 - FLEURS:`google/fleurs`(CC-BY-4.0),自动拉取
 
-## Qwen3 CTC 头的两个版本
+测试集可得性 —— 脚本自身只会拉 FLEURS:
 
-`models/qwen-ctc/` 放 v1,v2 放 `models/qwen-ctc-r2/`(两者都已 gitignore)。v2 **是一笔交易而非普遍提升** —— 英文更好、中文更差:
+| 数据集 | 第三方怎么拿到 |
+|---|---|
+| FLEURS | 自动(`hf_hub_download`,缓存在 `HF_HOME`) |
+| Buckeye | HF 上公开,但 `runners/bench_buckeye.py` 目前写死了本地快照路径 |
+| LibriSpeech | 公开;`runners/qwen_librispeech_parity.py` 目前写死 `/data/datasets/...` |
+| AISHELL-1 | 公开(需注册);未接进本仓库 |
+| ASCEND | 自建语料 —— **外部无法复现** |
+
+这些语料都没有镜像到本仓库;仓库里只跟踪长视频回归集的参考文本,因为那是生成的、不是公开发布的。
+
+## Qwen3 CTC 头的各轮版本
+
+`qwen*` 一共 15 个引擎条目,其中三轮发布了 ONNX 权重:
+
+| 轮次 | 引擎名 | 权重位置 | 下载 |
+|---|---|---|---|
+| v1 | `qwen` | HF `qwen-ctc/` | `download_models.py fetch` |
+| aiinfra4 | `qwen_aiinfra4` | HF `qwen-ctc-aiinfra4/` | `download_models.py aiinfra4` |
+| a7_avg5(当前) | `qwen_a7avg5` | HF `qwen-ctc-a7avg5/` | `download_models.py a7avg5` |
+| r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` 等 | 未发布 | 自行导出 |
+
+`models/qwen-ctc/` 放 v1;未发布的头各放 `models/qwen-ctc-<轮次>/`(均已 gitignore)。
+下面的 v1 与 v2 对比是 **2026-08 的历史实验**:v2 是一笔交易而非普遍提升 —— 英文更好、中文更差:
 
 | 测试集 | 指标 | GLM | Qwen3 v1 | Qwen3 v2 |
 |---|---|---|---|---|
@@ -165,6 +212,8 @@ scripts/
 >
 > 实现见 [glm-asr-ctc-train](https://github.com/JazerJu/glm-asr-ctc-train) 的 `scripts/bootstrap_compare.py`。
 
-权重:[qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc)(v1)与 [qwen3-asr-ctc-r2](https://huggingface.co/JazerJu/qwen3-asr-ctc-r2)(v2)。
+权重:[qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc)(v1,公开)与
+`qwen3-asr-ctc-r2`(v2,目前是 private 仓库,外部读者打不开)。
+当前头:[qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5)。
 
 工程约定与不变量见 [AGENTS.md](AGENTS.md)。
