@@ -177,7 +177,7 @@ Test-set availability — only FLEURS is fetched by the scripts themselves:
 None of these corpora are mirrored here; only derived reference text for the long-video sets
 is tracked, because it is generated rather than published.
 
-## Qwen3 CTC head revisions
+## Qwen3 CTC weight index
 
 There are 15 `qwen*` engine entries; three of them have published ONNX weights:
 
@@ -189,8 +189,15 @@ There are 15 `qwen*` engine entries; three of them have published ONNX weights:
 | r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` … | not published | export locally |
 
 `models/qwen-ctc/` holds v1; unpublished heads go in their own `models/qwen-ctc-<round>/`
-(all gitignored). The v1-vs-v2 comparison below is a **2026-08 historical experiment**:
-v2 was a trade, not a general improvement — better English, worse Chinese.
+(all gitignored).
+
+Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1, public) and
+`qwen3-asr-ctc-r2` (v2, currently a private repository — external readers cannot open it).
+Current head: [qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5).
+
+## 2026-08 v1-vs-v2 comparison (historical)
+
+v2 was a trade, not a general improvement — better English, worse Chinese:
 
 | test set | metric | GLM | Qwen3 v1 | Qwen3 v2 |
 |---|---|---|---|---|
@@ -198,39 +205,5 @@ v2 was a trade, not a general improvement — better English, worse Chinese.
 | LibriSpeech test-clean | WER | **4.88%** | 6.93% | 6.53% |
 | LibriSpeech test-other | WER | **9.99%** | 12.40% | 11.93% |
 | ASCEND test | MER | **11.84%** | 14.53% | 14.47% |
-
-The Chinese regression is real, not noise: 95% CI [+0.07, +0.34] pp over a
-**sentence-level paired bootstrap** (2000 resamples), which does not contain 0.
-
-> **What "sentence-level paired bootstrap" and "95% CI" mean**
->
-> A test set is one fixed sample of sentences — what if it happens to favour one
-> model? The bootstrap simulates "what if we drew a different set": resample the
-> same number of sentences **with replacement**, score them, repeat 2000 times,
-> and look at the spread of those 2000 results.
->
-> **By sentence, not by character** — errors cluster inside an utterance (one bad
-> sentence usually costs a dozen consecutive characters). Treating characters as
-> independent samples overstates the effective sample size several times over and
-> yields confidence intervals that are far too narrow.
->
-> **Paired** — each resampled set of sentences is scored for **both models at
-> once**, so "was this batch easy or hard" affects both sides equally and cancels
-> in the difference. Measured on aishell1_test, pairing halves the CI width
-> (0.263pp vs 0.529pp); for the same true difference of +0.208pp the paired
-> interval excludes 0 while the unpaired one straddles it and can't call a
-> direction.
->
-> **95% CI** is the middle 95% of those 2000 differences. **Not containing 0**
-> means the sign is stable no matter which sentences you draw; **straddling 0**
-> means some parallel worlds favour A and others favour B — direction unknown,
-> treat as noise.
->
-> Implementation: `scripts/bootstrap_compare.py` in
-> [glm-asr-ctc-train](https://github.com/JazerJu/glm-asr-ctc-train).
-
-Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1, public) and
-`qwen3-asr-ctc-r2` (v2, currently a private repository — external readers cannot open it).
-Current head: [qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5).
 
 Engineering conventions and invariants: [AGENTS.md](AGENTS.md).

@@ -177,7 +177,7 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 
 这些语料都没有镜像到本仓库;仓库里只跟踪长视频回归集的参考文本,因为那是生成的、不是公开发布的。
 
-## Qwen3 CTC 头的各轮版本
+## Qwen3 CTC 权重索引
 
 `qwen*` 一共 15 个引擎条目,其中三轮发布了 ONNX 权重:
 
@@ -189,7 +189,14 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 | r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` 等 | 未发布 | 自行导出 |
 
 `models/qwen-ctc/` 放 v1;未发布的头各放 `models/qwen-ctc-<轮次>/`(均已 gitignore)。
-下面的 v1 与 v2 对比是 **2026-08 的历史实验**:v2 是一笔交易而非普遍提升 —— 英文更好、中文更差:
+
+权重:[qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc)(v1,公开)与
+`qwen3-asr-ctc-r2`(v2,目前是 private 仓库,外部读者打不开)。
+当前头:[qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5)。
+
+## 2026-08 的 v1 与 v2 对照(历史)
+
+v2 是一笔交易而非普遍提升 —— 英文更好、中文更差:
 
 | 测试集 | 指标 | GLM | Qwen3 v1 | Qwen3 v2 |
 |---|---|---|---|---|
@@ -197,23 +204,5 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 | LibriSpeech test-clean | WER | **4.88%** | 6.93% | 6.53% |
 | LibriSpeech test-other | WER | **9.99%** | 12.40% | 11.93% |
 | ASCEND test | MER | **11.84%** | 14.53% | 14.47% |
-
-中文那个退步是真的、不是噪声:**按句配对自举** 2000 次,95% CI 为 [+0.07, +0.34] pp,不含 0。
-
-> **「按句配对自举」和「95% CI」是什么**
->
-> 测试集就固定那几千句,万一恰好抽到的这批句子对某个模型友好呢?**自举**就是模拟「换一批句子会怎样」:从原测试集里**有放回**地随机抽同样多的句子,组成一个「平行世界的测试集」,算一遍错误率,重复 2000 次,看这 2000 个结果的散布。
->
-> **按句**而不是按字 —— 错误在句子内部是聚集的(一句崩了往往连着错十几个字),按字当独立样本会把有效样本量高估好几倍,置信区间算得过窄。
->
-> **配对** —— 每次抽出的那批句子,**两个模型都在同一批上算**。这样「这批句子难不难」对两边影响相同,做差时抵消掉,剩下的才是模型的真实差异。实测在 aishell1_test 上配对能把 CI 宽度压到非配对的一半(0.263pp vs 0.529pp),同一个真实差值 +0.208pp,配对能下结论、非配对跨 0 判不出方向。
->
-> **95% CI**(置信区间)就是这 2000 个差值排序后中间 95% 的范围。**不含 0** 表示换哪批句子结论都一样,差异是稳的;**跨 0** 表示有些平行世界甲更好、有些乙更好,方向判不出来,只能当噪声。
->
-> 实现见 [glm-asr-ctc-train](https://github.com/JazerJu/glm-asr-ctc-train) 的 `scripts/bootstrap_compare.py`。
-
-权重:[qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc)(v1,公开)与
-`qwen3-asr-ctc-r2`(v2,目前是 private 仓库,外部读者打不开)。
-当前头:[qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5)。
 
 工程约定与不变量见 [AGENTS.md](AGENTS.md)。
