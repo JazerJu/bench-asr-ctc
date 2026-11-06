@@ -179,13 +179,15 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 
 ## Qwen3 CTC 权重索引
 
-`qwen*` 一共 15 个引擎条目,其中三轮发布了 ONNX 权重:
+`qwen*` 一共 15 个引擎条目,其中三轮发布了 ONNX 权重。
+这三轮都在**同一个** Hugging Face 仓库 [`JazerJu/glm-asr-ctc-bench`](https://huggingface.co/JazerJu/glm-asr-ctc-bench) 下,
+按目录区分 —— aiinfra4 与 a7_avg5 不是两个仓库:
 
 | 轮次 | 引擎名 | 权重位置 | 下载 |
 |---|---|---|---|
-| v1 | `qwen` | HF `qwen-ctc/` | `download_models.py fetch` |
-| aiinfra4 | `qwen_aiinfra4` | HF `qwen-ctc-aiinfra4/` | `download_models.py aiinfra4` |
-| a7_avg5(当前) | `qwen_a7avg5` | HF `qwen-ctc-a7avg5/` | `download_models.py a7avg5` |
+| v1 | `qwen` | [`qwen-ctc/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc) | `download_models.py fetch` |
+| aiinfra4 | `qwen_aiinfra4` | [`qwen-ctc-aiinfra4/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc-aiinfra4) | `download_models.py aiinfra4` |
+| a7_avg5(当前) | `qwen_a7avg5` | [`qwen-ctc-a7avg5/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc-a7avg5) | `download_models.py a7avg5` |
 | r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` 等 | 未发布 | 自行导出 |
 
 `models/qwen-ctc/` 放 v1;未发布的头各放 `models/qwen-ctc-<轮次>/`(均已 gitignore)。

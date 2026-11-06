@@ -179,13 +179,15 @@ is tracked, because it is generated rather than published.
 
 ## Qwen3 CTC weight index
 
-There are 15 `qwen*` engine entries; three of them have published ONNX weights:
+There are 15 `qwen*` engine entries; three of them have published ONNX weights.
+All three live in **one** Hugging Face repo, [`JazerJu/glm-asr-ctc-bench`](https://huggingface.co/JazerJu/glm-asr-ctc-bench),
+separated by directory — aiinfra4 and a7_avg5 are not in different repositories:
 
 | round | engine | weights | fetch |
 |---|---|---|---|
-| v1 | `qwen` | HF `qwen-ctc/` | `download_models.py fetch` |
-| aiinfra4 | `qwen_aiinfra4` | HF `qwen-ctc-aiinfra4/` | `download_models.py aiinfra4` |
-| a7_avg5 (current) | `qwen_a7avg5` | HF `qwen-ctc-a7avg5/` | `download_models.py a7avg5` |
+| v1 | `qwen` | [`qwen-ctc/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc) | `download_models.py fetch` |
+| aiinfra4 | `qwen_aiinfra4` | [`qwen-ctc-aiinfra4/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc-aiinfra4) | `download_models.py aiinfra4` |
+| a7_avg5 (current) | `qwen_a7avg5` | [`qwen-ctc-a7avg5/`](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc-a7avg5) | `download_models.py a7avg5` |
 | r2 / ja / ja_sc / aiinfra / aiinfra2 / aiinfra3 / aiinfra5 | `qwen_r2` … | not published | export locally |
 
 `models/qwen-ctc/` holds v1; unpublished heads go in their own `models/qwen-ctc-<round>/`
