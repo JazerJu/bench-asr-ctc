@@ -10,7 +10,7 @@ Only a7_avg5 weights are added in this release; a5/a6 results are retained as
 historical comparisons, without publishing their weights.
 
 - ONNX: [JazerJu/glm-asr-ctc-bench/qwen-ctc-a7avg5](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc-a7avg5)
-- PyTorch: [JazerJu/qwen3-asr-ctc/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc/tree/main/a7_avg5)
+- PyTorch: [JazerJu/qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5) (the aiinfra-series repo; its root stays aiinfra4)
 - Shared encoder, byte vocabulary, feature extractor: the existing
   [qwen-ctc/](https://huggingface.co/JazerJu/glm-asr-ctc-bench/tree/main/qwen-ctc).
 - Issue context: [CapsWriter-Offline #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457).
