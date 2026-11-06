@@ -196,7 +196,7 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 `qwen3-asr-ctc-r2`(v2,目前是 private 仓库,外部读者打不开)。
 当前头:[qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5)。
 
-PyTorch 格式的原始头(safetensors,Hugging Face 存档库 —— 按系列分仓库,不是按轮次):
+PyTorch 格式的原始头(safetensors,Hugging Face 存档库):
 v1 在 [`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc);
 aiinfra4 在 [`JazerJu/qwen3-asr-ctc-aiinfra`](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra) 根目录,
 a7_avg5 在其 `a7_avg5/` 子目录。

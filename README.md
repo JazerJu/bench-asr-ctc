@@ -197,7 +197,7 @@ Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1, publ
 `qwen3-asr-ctc-r2` (v2, currently a private repository — external readers cannot open it).
 Current head: [qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5).
 
-PyTorch-format heads (safetensors, Hugging Face archives — one repo per lineage, not per round):
+PyTorch-format heads (safetensors, Hugging Face archives):
 v1 in [`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc);
 aiinfra4 at the root of [`JazerJu/qwen3-asr-ctc-aiinfra`](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra)
 and a7_avg5 in its `a7_avg5/` subdirectory.
