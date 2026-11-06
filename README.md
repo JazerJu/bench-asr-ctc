@@ -166,7 +166,7 @@ Export details: `../Qwen3-ASR-CTC-GGUF/`.
 
 Test-set availability — only FLEURS is fetched by the scripts themselves:
 
-| dataset | how a third party gets it |
+| dataset | third-party access |
 |---|---|
 | FLEURS | automatic (`hf_hub_download`, cached under `HF_HOME`) |
 | Buckeye | public on HF, but `runners/bench_buckeye.py` currently hardcodes a local snapshot path |
@@ -196,6 +196,11 @@ separated by directory — aiinfra4 and a7_avg5 are not in different repositorie
 Weights: [qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc) (v1, public) and
 `qwen3-asr-ctc-r2` (v2, currently a private repository — external readers cannot open it).
 Current head: [qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5).
+
+PyTorch-format heads (safetensors, Hugging Face archives — one repo per lineage, not per round):
+v1 in [`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc);
+aiinfra4 at the root of [`JazerJu/qwen3-asr-ctc-aiinfra`](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra)
+and a7_avg5 in its `a7_avg5/` subdirectory.
 
 ## 2026-08 v1-vs-v2 comparison (historical)
 

@@ -167,7 +167,7 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 
 测试集可得性 —— 脚本自身只会拉 FLEURS:
 
-| 数据集 | 第三方怎么拿到 |
+| 数据集 | 第三方获取方式 |
 |---|---|
 | FLEURS | 自动(`hf_hub_download`,缓存在 `HF_HOME`) |
 | Buckeye | HF 上公开,但 `runners/bench_buckeye.py` 目前写死了本地快照路径 |
@@ -195,6 +195,11 @@ ONNX 链路对训练侧 PyTorch 的一致性:LibriSpeech test-clean WER 6.92% �
 权重:[qwen3-asr-ctc](https://huggingface.co/JazerJu/qwen3-asr-ctc)(v1,公开)与
 `qwen3-asr-ctc-r2`(v2,目前是 private 仓库,外部读者打不开)。
 当前头:[qwen3-asr-ctc-aiinfra/a7_avg5](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra/tree/main/a7_avg5)。
+
+PyTorch 格式的原始头(safetensors,Hugging Face 存档库 —— 按系列分仓库,不是按轮次):
+v1 在 [`JazerJu/qwen3-asr-ctc`](https://huggingface.co/JazerJu/qwen3-asr-ctc);
+aiinfra4 在 [`JazerJu/qwen3-asr-ctc-aiinfra`](https://huggingface.co/JazerJu/qwen3-asr-ctc-aiinfra) 根目录,
+a7_avg5 在其 `a7_avg5/` 子目录。
 
 ## 2026-08 的 v1 与 v2 对照(历史)
 
