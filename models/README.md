@@ -20,7 +20,7 @@ Shared frozen encoder, original v1 head, base64 byte vocabulary, and
 ## qwen-ctc-a7avg5/ (`python scripts/download_models.py a7avg5`)
 New head only: `Qwen3-ASR-CTC.{hqqf16,q4f16,q4}.onnx`, `config.json`.
 `FETCH_FP16=1` also downloads `Qwen3-ASR-CTC.fp16.onnx`.
-The engine `qwen_a7avg5` defaults to hqqf16 and reuses `qwen-ctc/`.
+The engine `qwen_a7avg5` defaults to q4 and reuses `qwen-ctc/`; pass `--precision hqqf16` for the HQQ head.
 For a7 DirectML, use `fetch-fp16` for the shared encoder and
 `FETCH_FP16=1 python scripts/download_models.py a7avg5` for the new head.
 See [release details](../docs/a7_avg5.md); all weights remain gitignored.

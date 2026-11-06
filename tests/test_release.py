@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from bench import models
 from bench.models import QwenA7Avg5Engine, QwenAiinfra4Engine
 
 
@@ -27,47 +28,58 @@ def load_script(name):
 
 
 class ReleaseTests(unittest.TestCase):
-    def test_a7_paths(self):
-        engine = QwenA7Avg5Engine.__new__(QwenA7Avg5Engine)
-        with patch.dict(os.environ, {}, clear=True):
-            enc, ctc = engine.model_paths()
-            self.assertEqual(enc.name, "Qwen3-ASR-Encoder.q4.onnx")
-            self.assertEqual(ctc.name, "Qwen3-ASR-CTC.hqqf16.onnx")
-            for tag in ("fp16", "q4", "q4f16", "hqqf16"):
-                os.environ["BENCH_PRECISION"] = tag
-                self.assertEqual(engine.model_paths()[1].name, f"Qwen3-ASR-CTC.{tag}.onnx")
-                self.assertEqual(engine.model_paths()[0], enc)
+    def _paths_for(self, cls, **env):
+        recorded = []
 
-    def test_dml_requires_unquantized_graph(self):
-        engine = QwenA7Avg5Engine.__new__(QwenA7Avg5Engine)
-        with patch.dict(os.environ, {"BENCH_ORT_PROVIDER": "dml"}, clear=True):
-            with self.assertRaisesRegex(ValueError, "DirectML"):
-                engine.model_paths()
-            os.environ["BENCH_PRECISION"] = "fp16"
-            self.assertEqual(engine.model_paths()[0].name, "Qwen3-ASR-Encoder.fp16.onnx")
-        with patch.dict(os.environ, {"BENCH_PRECISION": "typo"}, clear=True):
-            with self.assertRaises(ValueError):
-                engine.model_paths()
+        def fake(path, use_gpu, intra_threads=6):
+            recorded.append(Path(path).name)
+            return Mock()
+
+        with tempfile.TemporaryDirectory() as td:
+            (Path(td) / "qwen-ctc").mkdir()
+            (Path(td) / "qwen-ctc" / "tokens.txt").write_text("", encoding="utf-8")
+            fake_transformers = types.ModuleType("transformers")
+            fake_transformers.WhisperFeatureExtractor = Mock(
+                from_pretrained=Mock(return_value=Mock())
+            )
+            with patch.object(models, "_session", side_effect=fake), \
+                 patch.dict(os.environ, env, clear=True), \
+                 patch.dict(sys.modules, {"transformers": fake_transformers}), \
+                 patch.object(models, "MODELS_DIR", Path(td)):
+                cls(use_gpu=False)
+        return recorded
+
+    def test_a7_paths_use_existing_precision_contract(self):
+        self.assertEqual(self._paths_for(models.QwenA7Avg5Engine),
+                         ["Qwen3-ASR-Encoder.q4.onnx", "Qwen3-ASR-CTC.q4.onnx"])
+        self.assertEqual(self._paths_for(models.QwenA7Avg5Engine, BENCH_PRECISION="hqqf16"),
+                         ["Qwen3-ASR-Encoder.q4.onnx", "Qwen3-ASR-CTC.hqqf16.onnx"])
+        self.assertEqual(self._paths_for(models.QwenA7Avg5Engine, BENCH_PRECISION="fp16"),
+                         ["Qwen3-ASR-Encoder.q4.onnx", "Qwen3-ASR-CTC.fp16.onnx"])
+
+    def test_a7_is_a_plain_subclass(self):
+        self.assertIs(models.QwenA7Avg5Engine.__mro__[1], models.QwenAiinfra2Engine)
+        self.assertNotIn("model_paths", models.QwenA7Avg5Engine.__dict__)
+        self.assertEqual(models.QwenA7Avg5Engine.CTC_SUBDIR, "qwen-ctc-a7avg5")
 
     def test_historical_engine_default_is_unchanged(self):
-        engine = QwenAiinfra4Engine.__new__(QwenAiinfra4Engine)
-        with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(engine.model_paths()[1].name, "Qwen3-ASR-CTC.q4.onnx")
+        self.assertEqual(self._paths_for(models.QwenAiinfra4Engine),
+                         ["Qwen3-ASR-Encoder.q4.onnx", "Qwen3-ASR-CTC.q4.onnx"])
 
-    def test_download_head_layout(self):
+    def test_download_fetchers_mirror_existing_pattern(self):
         mod = load_script("download_models")
         with tempfile.TemporaryDirectory() as td, patch.dict(os.environ, {}, clear=True):
             source = Path(td) / "fake-download"
             source.write_bytes(b"weights")
-            with patch.object(mod, "ROOT", Path(td)), patch.object(
-                mod, "hf_hub_download", return_value=str(source)
-            ) as download, contextlib.redirect_stdout(io.StringIO()):
-                mod.fetch_head("qwen-ctc-a7avg5")
+            with patch.object(mod, "ROOT", Path(td)), \
+                 patch.object(mod, "A7AVG5_DIR", Path(td) / "models/qwen-ctc-a7avg5"), \
+                 patch.object(mod, "hf_hub_download", return_value=str(source)) as download, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                mod.fetch_a7avg5()
                 self.assertEqual(download.call_count, 4)
                 self.assertTrue((Path(td) / "models/qwen-ctc-a7avg5/Qwen3-ASR-CTC.hqqf16.onnx").is_file())
-                download.reset_mock()
-                mod.fetch_head("qwen-ctc-a7avg5", fp16_only=True)
-                self.assertEqual(download.call_args.args[1], "qwen-ctc-a7avg5/Qwen3-ASR-CTC.fp16.onnx")
+                self.assertTrue(hasattr(mod, "fetch_aiinfra4"))
+                self.assertEqual(mod.AIINFRA4_FILES[0], "qwen-ctc-aiinfra4/Qwen3-ASR-CTC.q4.onnx")
 
     def test_audio_preparation_does_not_overwrite(self):
         mod = load_script("prepare_case_audio")
@@ -150,9 +162,8 @@ class ReleaseTests(unittest.TestCase):
                  patch("pyarrow.parquet.read_table", return_value=table):
                 runner.run(args)
             meta = json.loads(out.read_text())["meta"]
-            self.assertEqual(meta["engines"]["qwen_a7avg5"]["precision"], "hqqf16")
             self.assertIn("a7_avg5", meta["engines"]["qwen_a7avg5"]["ctc"])
-            self.assertEqual(meta["ctc_providers"]["qwen_a7avg5"], ["CPUExecutionProvider"])
+            self.assertTrue(meta["engines"]["qwen_a7avg5"]["quantized"])
 
 
 if __name__ == "__main__":

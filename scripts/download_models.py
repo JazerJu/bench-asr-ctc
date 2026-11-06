@@ -26,6 +26,8 @@ GLM_DIR = ROOT / "models" / "glm-ctc"
 FUN_DIR = ROOT / "models" / "fun-asr"
 QWEN_DIR = ROOT / "models" / "qwen-ctc"
 # 续训轮只换 CTC 头，编码器和 tokens.txt 还用 qwen-ctc/ 下那份
+AIINFRA4_DIR = ROOT / "models" / "qwen-ctc-aiinfra4"
+A7AVG5_DIR = ROOT / "models" / "qwen-ctc-a7avg5"
 
 HF_REPO = os.environ.get("BENCH_MODEL_REPO", "JazerJu/glm-asr-ctc-bench")
 
@@ -54,14 +56,21 @@ QWEN_FILES = [
     "qwen-ctc/preprocessor_config.json",
 ]
 
-# 续训轮的 CTC 头：子目录 -> 默认拉的文件。fp16 只在 FETCH_FP16 时拉（171 MB）。
-HEADS = {
-    # aiinfra4：#457 里最初给出的版本，英文音频上会串出中文
-    "qwen-ctc-aiinfra4": ["Qwen3-ASR-CTC.q4.onnx", "Qwen3-ASR-CTC.q4f16.onnx", "config.json"],
-    # a7_avg5：修掉串味的版本，hqqf16 是 CapsWriter-Offline 线上在用的那份
-    "qwen-ctc-a7avg5": ["Qwen3-ASR-CTC.hqqf16.onnx", "Qwen3-ASR-CTC.q4f16.onnx",
-                        "Qwen3-ASR-CTC.q4.onnx", "config.json"],
-}
+# aiinfra4 收尾轮的 CTC 头。q4f16 是 CapsWriter-Offline 在用的那份。
+# fp16 只在 FETCH_FP16 时拉（171 MB）。
+AIINFRA4_FILES = [
+    "qwen-ctc-aiinfra4/Qwen3-ASR-CTC.q4.onnx",
+    "qwen-ctc-aiinfra4/Qwen3-ASR-CTC.q4f16.onnx",
+    "qwen-ctc-aiinfra4/config.json",
+]
+
+# a7_avg5：修 #457 串味的一轮，含 HQQ 头。fp16 同样只在 FETCH_FP16 时拉。
+A7AVG5_FILES = [
+    "qwen-ctc-a7avg5/Qwen3-ASR-CTC.q4.onnx",
+    "qwen-ctc-a7avg5/Qwen3-ASR-CTC.q4f16.onnx",
+    "qwen-ctc-a7avg5/Qwen3-ASR-CTC.hqqf16.onnx",
+    "qwen-ctc-a7avg5/config.json",
+]
 
 FP16_FILES = [
     "glm-ctc/GLM-ASR-Encoder.fp16.onnx",
@@ -121,21 +130,36 @@ def fetch_qwen():
         print(f"qwen: {dst.name} fetched from {HF_REPO}")
 
 
-def fetch_head(subdir: str, fp16_only: bool = False):
-    """续训轮的 CTC 头。编码器共用 qwen-ctc/，所以先跑 fetch_qwen()。"""
-    d = ROOT / "models" / subdir
-    d.mkdir(parents=True, exist_ok=True)
-    names = ["config.json"] if fp16_only else list(HEADS[subdir])
-    if fp16_only or os.environ.get("FETCH_FP16"):
-        names.append("Qwen3-ASR-CTC.fp16.onnx")
+def fetch_aiinfra4():
+    """qwen_aiinfra4 引擎要的 CTC 头。编码器共用 qwen-ctc/，所以先跑 fetch_qwen()。"""
+    AIINFRA4_DIR.mkdir(parents=True, exist_ok=True)
+    names = list(AIINFRA4_FILES)
+    if os.environ.get("FETCH_FP16"):
+        names.append("qwen-ctc-aiinfra4/Qwen3-ASR-CTC.fp16.onnx")
     for name in names:
-        dst = d / name
+        dst = AIINFRA4_DIR / Path(name).name
         if dst.exists():
-            print(f"{subdir}: {name} already present")
+            print(f"aiinfra4: {dst.name} already present")
             continue
-        p = hf_hub_download(HF_REPO, f"{subdir}/{name}", repo_type="model")
+        p = hf_hub_download(HF_REPO, name, repo_type="model")
         shutil.copyfile(p, dst)
-        print(f"{subdir}: {name} fetched from {HF_REPO}")
+        print(f"aiinfra4: {dst.name} fetched from {HF_REPO}")
+
+
+def fetch_a7avg5():
+    """qwen_a7avg5 引擎要的 CTC 头。编码器共用 qwen-ctc/，所以先跑 fetch_qwen()。"""
+    A7AVG5_DIR.mkdir(parents=True, exist_ok=True)
+    names = list(A7AVG5_FILES)
+    if os.environ.get("FETCH_FP16"):
+        names.append("qwen-ctc-a7avg5/Qwen3-ASR-CTC.fp16.onnx")
+    for name in names:
+        dst = A7AVG5_DIR / Path(name).name
+        if dst.exists():
+            print(f"a7avg5: {dst.name} already present")
+            continue
+        p = hf_hub_download(HF_REPO, name, repo_type="model")
+        shutil.copyfile(p, dst)
+        print(f"a7avg5: {dst.name} fetched from {HF_REPO}")
 
 
 def fetch_fp16():
@@ -159,14 +183,17 @@ if __name__ == "__main__":
         fetch()
         link_fun()
         fetch_qwen()
-        fetch_head("qwen-ctc-aiinfra4")
+        fetch_aiinfra4()
         if os.environ.get("FETCH_FP16"):
             fetch_fp16()
     elif cmd == "fetch-fp16":
         fetch_fp16()
-    elif f"qwen-ctc-{cmd}" in HEADS:
+    elif cmd == "aiinfra4":
         fetch_qwen()
-        fetch_head(f"qwen-ctc-{cmd}")
+        fetch_aiinfra4()
+    elif cmd == "a7avg5":
+        fetch_qwen()
+        fetch_a7avg5()
     elif cmd == "fun":
         link_fun()
     else:

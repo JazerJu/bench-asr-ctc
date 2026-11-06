@@ -14,7 +14,7 @@
 
 HF 的 ONNX / PyTorch 权重、model card 与校验清单均已上传；使用下方命令单独下载 a7，原有 `fetch` 不受影响。
 
-新增 self-conditioned Qwen3 CTC 头，引擎名 `qwen_a7avg5`，默认 HQQ int4 权重 + fp16 激活。
+新增 self-conditioned Qwen3 CTC 头，引擎名 `qwen_a7avg5`，默认 q4（与其他轮一致）；HQQ 用 `--precision hqqf16`。
 针对 [CapsWriter #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457)
 反馈的英文音频串出中文问题做了数据清洗、续训和末段 5 个 checkpoint 平均。
 旧的 `qwen` 和 `qwen_aiinfra4` 保留，不覆盖旧权重。

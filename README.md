@@ -14,8 +14,7 @@ Tests three capabilities on identical audio:
 The ONNX and PyTorch weights, model cards, and checksums are published on HF.
 The a7 download below is opt-in; existing `fetch` remains unchanged.
 
-The new self-conditioned Qwen3 CTC head is registered as `qwen_a7avg5` (default:
-HQQ int4 weights + fp16 activations). It reduces the English-to-Chinese leakage
+The new self-conditioned Qwen3 CTC head is registered as `qwen_a7avg5` (default: q4, same as other rounds; HQQ via `--precision hqqf16`). It reduces the English-to-Chinese leakage
 reported in [CapsWriter #457](https://github.com/HaujetZhao/CapsWriter-Offline/issues/457).
 It does not replace the historical `qwen` or `qwen_aiinfra4` weights.
 

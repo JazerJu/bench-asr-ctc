@@ -83,7 +83,7 @@ FETCH_FP16=1 python scripts/download_models.py a7avg5
 python bench.py --counts 20 --engines qwen_a7avg5 --precision fp16
 ```
 
-The a7 engine defaults to **hqqf16**; historical engines retain their defaults.
+The a7 engine defaults to **q4**, matching other rounds; select **hqqf16** explicitly with `--precision hqqf16`.
 In this bench registry the shared encoder is q4, whereas the saved CapsWriter
 regression table uses q4f16. Do not expect bit-identical numbers across them.
 For DirectML, run `fetch-fp16` for the shared encoder and download the new head
